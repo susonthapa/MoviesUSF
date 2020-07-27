@@ -3,7 +3,6 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: "androidx.navigation.safeargs.kotlin"
 apply plugin: "kotlin-kapt"
-apply plugin: "dagger.hilt.android.plugin"
 
 android {
     compileSdkVersion 29
@@ -20,9 +19,14 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField 'String', "OMDB_API_KEY", omdb_api_key
+        }
+
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            buildConfigField 'String', "OMDB_API_KEY", omdb_api_key
         }
     }
 
@@ -52,10 +56,9 @@ dependencies {
     implementation "androidx.navigation:navigation-fragment-ktx:2.3.0"
     implementation "androidx.navigation:navigation-ui-ktx:2.3.0"
 
-    // hilt DI
-    implementation "com.google.dagger:hilt-android:2.28-alpha"
-    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    kapt "com.google.dagger:hilt-android-compiler:2.28-alpha"
+    // dagger
+    implementation "com.google.dagger:dagger:2.28"
+    kapt "com.google.dagger:dagger-compiler:2.28"
 
     // timber for logging
     implementation "com.jakewharton.timber:timber:4.7.1"
