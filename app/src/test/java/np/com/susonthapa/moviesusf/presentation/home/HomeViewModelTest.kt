@@ -54,19 +54,16 @@ class HomeViewModelTest {
         stateTester = viewModel.state.test()
         effectTester = viewModel.effect.test()
 
-        // verify initial state is returned
+        viewModel.processEvent(ScreenLoadEvent(false))
         stateTester.assertValueCount(1)
-
-        viewModel.processEvent(ScreenLoadEvent)
-        stateTester.assertValueCount(2)
     }
 
     @Test
     fun whenSearchMovie_AndMovieFound_ShowResults() {
         viewModel.processEvent(SearchMovieEvent("blade"))
 
-        stateTester.assertValueCount(5)
-        stateTester.assertValueAt(4) {
+        stateTester.assertValueCount(4)
+        stateTester.assertValueAt(3) {
             assertThat(it.searchResult.value.size).isEqualTo(movies.size)
             true
         }
@@ -76,7 +73,7 @@ class HomeViewModelTest {
     fun whenSearchMovie_AndQueryEmpty_NoSearch() {
         viewModel.processEvent(SearchMovieEvent(""))
 
-        stateTester.assertValueCount(2)
+        stateTester.assertValueCount(1)
     }
 
     @Test
@@ -87,6 +84,7 @@ class HomeViewModelTest {
         stateTester.assertValueCount(4)
         stateTester.assertValueAt(3) {
             assertThat(it.searchStatus.value).isEqualTo(ContentStatus.EMPTY)
+            assertThat(it.searchResult.value.isEmpty()).isTrue()
             true
         }
     }
@@ -99,6 +97,18 @@ class HomeViewModelTest {
         stateTester.assertValueCount(4)
         stateTester.assertValueAt(3) {
             assertThat(it.searchStatus.value.status).isEqualTo(DataStatus.ERROR)
+            assertThat(it.searchResult.value.isEmpty()).isTrue()
+            true
+        }
+    }
+
+    @Test
+    fun whenSearchMovieSuccess_AnimateSearchButton() {
+        whenSearchMovie_AndMovieFound_ShowResults()
+
+        stateTester.assertValueCount(4)
+        stateTester.assertValueAt(3) {
+            assertThat(it.searchAnimation.value.isAnimated).isTrue()
             true
         }
     }

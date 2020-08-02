@@ -2,13 +2,11 @@ package np.com.susonthapa.moviesusf.presentation.home
 
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.ObservableTransformer
-import io.reactivex.rxjava3.functions.BiFunction
-import np.com.susonthapa.core.ui.common.DisposingViewModel
 import np.com.susonthapa.moviesusf.data.Lce
 import np.com.susonthapa.moviesusf.data.MoviesRepository
 import np.com.susonthapa.moviesusf.data.ViewBox
+import np.com.susonthapa.moviesusf.data.ViewVisibility
 import np.com.susonthapa.moviesusf.domain.ContentStatus
-import np.com.susonthapa.moviesusf.domain.Movies
 import np.com.susonthapa.moviesusf.presentation.usf.UViewModel
 import javax.inject.Inject
 import np.com.susonthapa.moviesusf.presentation.home.HomeEffects.*
@@ -27,7 +25,7 @@ class HomeViewModel @Inject constructor(
         return events.publish { o ->
             Observable.merge(
                 arrayListOf(
-                    o.ofType(ScreenLoadEvent::class.java).map { ScreenLoadResult },
+                    o.ofType(ScreenLoadEvent::class.java).map { ScreenLoadResult(it.isRestored) },
                     o.ofType(SearchMovieEvent::class.java).compose(searchMovie()),
                     o.ofType(AddMovieToHistoryEvent::class.java).compose(addMovieToHistory()),
                     o.ofType(LoadMovieDetailsEvent::class.java).compose(loadMovieDetails())
@@ -41,15 +39,27 @@ class HomeViewModel @Inject constructor(
             .scan(HomeState()) { vs, result ->
                 when (result) {
                     is ScreenLoadResult -> {
-                        vs.resetCopy()
+                        if (result.isRestored) {
+                            // change state when the fragment is restored
+                            vs.resetCopy()
+                        } else {
+                            vs.resetCopy()
+                        }
                     }
 
                     is SearchMovieResult -> {
-                        vs.stateCopy(searchResult = ViewBox(result.movies))
+                        vs.stateCopy(
+                            searchResult = ViewBox(result.movies), searchAnimation = ViewBox(
+                                ViewVisibility(true, isAnimated = true)
+                            )
+                        )
+
                     }
 
                     is SearchMovieStatusResult -> {
-                        vs.stateCopy(searchStatus = ViewBox(result.status))
+                        vs.stateCopy(
+                            searchStatus = ViewBox(result.status)
+                        )
                     }
 
                     is AddMovieToHistoryResult -> {
@@ -91,25 +101,38 @@ class HomeViewModel @Inject constructor(
                             Pair(response, state)
                         }
                         .flatMap { combinedResult ->
-                            val it = combinedResult.first
-                            when (it) {
+                            when (val response = combinedResult.first) {
                                 is Lce.Loading -> {
-                                    Observable.just(SearchMovieStatusResult(ContentStatus.LOADING))
+                                    Observable.just(
+                                        SearchMovieStatusResult(ContentStatus.LOADING)
+                                    )
                                 }
 
                                 is Lce.Content -> {
-                                    if (it.packet.isEmpty()) {
-                                        Observable.just(SearchMovieStatusResult(ContentStatus.EMPTY))
+                                    if (response.packet.isEmpty()) {
+                                        Observable.just(
+                                            SearchMovieStatusResult(ContentStatus.EMPTY),
+                                            SearchMovieResult(
+                                                listOf()
+                                            )
+                                        )
                                     } else {
                                         Observable.just(
                                             SearchMovieStatusResult(ContentStatus.LOADED),
-                                            SearchMovieResult(it.packet)
+                                            SearchMovieResult(response.packet)
                                         )
                                     }
                                 }
 
                                 is Lce.Error -> {
-                                    Observable.just(SearchMovieStatusResult(ContentStatus.error(it.throwable?.message)))
+                                    Observable.just(
+                                        SearchMovieStatusResult(
+                                            ContentStatus.error(
+                                                response.throwable?.message
+                                            )
+                                        ),
+                                        SearchMovieResult(listOf())
+                                    )
                                 }
                             }
                         }
@@ -140,7 +163,7 @@ class HomeViewModel @Inject constructor(
     private fun loadMovieDetails(): ObservableTransformer<LoadMovieDetailsEvent, LoadMovieDetailsResult> {
         return ObservableTransformer { observable ->
             observable
-                .withLatestFrom(mState) {event, state ->
+                .withLatestFrom(mState) { event, state ->
                     val movie = state.searchResult.value[event.position]
                     LoadMovieDetailsResult(movie)
                 }

@@ -1,10 +1,14 @@
 package np.com.susonthapa.moviesusf.presentation.home
 
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.animation.PropertyValuesHolder
 import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.OvershootInterpolator
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -105,6 +109,26 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
 
             }
         }
+
+        state.searchAnimation.getValueIfChanged()?.let {
+            Timber.d("------ rendering animation of search: $it")
+            if (it.isAnimated) {
+                val scaleFactor = 0.2f
+                val growX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1f + scaleFactor)
+                val growY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f + scaleFactor)
+                val growAnimation = ObjectAnimator.ofPropertyValuesHolder(binding.searchButton, growX, growY)
+                growAnimation.interpolator = OvershootInterpolator()
+
+                val shrinkX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1f)
+                val shrinkY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f)
+                val shrinkAnimation = ObjectAnimator.ofPropertyValuesHolder(binding.searchButton, shrinkX, shrinkY)
+                shrinkAnimation.interpolator = OvershootInterpolator()
+
+                val animSet = AnimatorSet()
+                animSet.playSequentially(growAnimation, shrinkAnimation)
+                animSet.start()
+            }
+        }
     }
 
     override fun trigger(effect: HomeEffects) {
@@ -118,7 +142,7 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
 
     override fun onResume() {
         super.onResume()
-        val screenLoadEvent: Observable<ScreenLoadEvent> = Observable.just(ScreenLoadEvent)
+        val screenLoadEvent: Observable<ScreenLoadEvent> = Observable.just(ScreenLoadEvent(isRestoredFromBackStack))
         val searchMovieEvent: Observable<SearchMovieEvent> = binding.searchButton.clicks()
             .map {
                 SearchMovieEvent(binding.searchEditText.text.toString())
