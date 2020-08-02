@@ -4,6 +4,8 @@ import android.app.Application
 import com.facebook.drawee.backends.pipeline.Fresco
 import np.com.susonthapa.moviesusf.di.ApplicationModule
 import np.com.susonthapa.moviesusf.di.DaggerApplicationComponent
+import np.com.susonthapa.moviesusf.logging.CustomDebugTree
+import np.com.susonthapa.moviesusf.logging.ProductionTree
 import timber.log.Timber
 
 /**
@@ -17,7 +19,11 @@ class BaseApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         Fresco.initialize(this)
-        Timber.plant(Timber.DebugTree())
+        if (BuildConfig.DEBUG) {
+            Timber.plant(CustomDebugTree())
+        } else {
+            Timber.plant(ProductionTree())
+        }
     }
 
 }

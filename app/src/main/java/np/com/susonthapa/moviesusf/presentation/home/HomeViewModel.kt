@@ -14,6 +14,7 @@ import javax.inject.Inject
 import np.com.susonthapa.moviesusf.presentation.home.HomeEffects.*
 import np.com.susonthapa.moviesusf.presentation.home.HomeEvents.*
 import np.com.susonthapa.moviesusf.presentation.home.HomeResults.*
+import np.com.susonthapa.moviesusf.utils.withLatestFrom
 
 /**
  * Created by suson on 8/1/20
@@ -65,7 +66,7 @@ class HomeViewModel @Inject constructor(
     }
 
     override fun resultToEffect(results: Observable<out HomeResults>): Observable<HomeEffects> {
-        return results.map {result ->
+        return results.map { result ->
             when (result) {
                 is LoadMovieDetailsResult -> {
                     NavigateToDetailsEffect(result.movie)
@@ -86,7 +87,11 @@ class HomeViewModel @Inject constructor(
                 }
                 .switchMap { e ->
                     repo.getMoviesFromServer(e.query)
-                        .flatMap {
+                        .withLatestFrom(mState) { response, state ->
+                            Pair(response, state)
+                        }
+                        .flatMap { combinedResult ->
+                            val it = combinedResult.first
                             when (it) {
                                 is Lce.Loading -> {
                                     Observable.just(SearchMovieStatusResult(ContentStatus.LOADING))
@@ -115,34 +120,30 @@ class HomeViewModel @Inject constructor(
     private fun addMovieToHistory(): ObservableTransformer<AddMovieToHistoryEvent, out HomeResults> {
         return ObservableTransformer { observable ->
             observable
-                .withLatestFrom(
-                    state,
-                    BiFunction<AddMovieToHistoryEvent, HomeState, HomeResults> { event, state ->
-                        val currentMovie = state.searchResult?.value[event.position]
-                        val currentHistory = state.history.value
-                        val isMovieInHistory = currentHistory.find {
-                            it.id == currentMovie.id
-                        } != null
-                        if (isMovieInHistory) {
-                            NoResult
-                        } else {
-                            val newHistory = currentHistory.toMutableList()
-                            newHistory.add(currentMovie)
-                            AddMovieToHistoryResult(newHistory)
-                        }
-                    })
+                .withLatestFrom(mState) { event, state ->
+                    val currentMovie = state.searchResult?.value[event.position]
+                    val currentHistory = state.history.value
+                    val isMovieInHistory = currentHistory.find {
+                        it.id == currentMovie.id
+                    } != null
+                    if (isMovieInHistory) {
+                        NoResult
+                    } else {
+                        val newHistory = currentHistory.toMutableList()
+                        newHistory.add(currentMovie)
+                        AddMovieToHistoryResult(newHistory)
+                    }
+                }
         }
     }
 
     private fun loadMovieDetails(): ObservableTransformer<LoadMovieDetailsEvent, LoadMovieDetailsResult> {
         return ObservableTransformer { observable ->
             observable
-                .withLatestFrom(
-                    state,
-                    BiFunction<LoadMovieDetailsEvent, HomeState, LoadMovieDetailsResult> { event, state ->
-                        val movie = state.searchResult.value[event.position]
-                        LoadMovieDetailsResult(movie)
-                    })
+                .withLatestFrom(mState) {event, state ->
+                    val movie = state.searchResult.value[event.position]
+                    LoadMovieDetailsResult(movie)
+                }
         }
     }
 

@@ -14,6 +14,8 @@ abstract class UViewModel<E : Event, R : Result, S : State, F : Effect> : Dispos
     override val state: Observable<S>
     override val effect: Observable<F>
 
+    protected val mState: Observable<S>
+
     private val eventEmitter = PublishRelay.create<E>()
 
     init {
@@ -33,14 +35,16 @@ abstract class UViewModel<E : Event, R : Result, S : State, F : Effect> : Dispos
                 addDisposable(it)
              }
             .also {o ->
-                state = resultToState(o)
+                mState = resultToState(o)
                     .doOnNext {
                         Timber.d("------ vs: $it")
                     }
-                    .publish()
+                    .replay(1)
                     .autoConnect(1) {
                         addDisposable(it)
                     }
+
+                state = mState.skip(1)
 
                 effect = resultToEffect(o)
                     .doOnNext {

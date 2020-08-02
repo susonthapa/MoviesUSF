@@ -18,9 +18,9 @@ import np.com.susonthapa.moviesusf.presentation.usf.State
  * State to represent the Home screen
  */
 data class HomeState(
-    val searchResult: ViewBox<List<Movies>> = ViewBox(listOf(), false),
-    val searchStatus: ViewBox<ContentStatus> = ViewBox(ContentStatus.LOADED, false),
-    val history: ViewBox<List<Movies>> = ViewBox(listOf(), false)
+    val searchResult: ViewBox<List<Movies>> = ViewBox(listOf()),
+    val searchStatus: ViewBox<ContentStatus> = ViewBox(ContentStatus.LOADED),
+    val history: ViewBox<List<Movies>> = ViewBox(listOf())
 ) : State {
 
     fun stateCopy(

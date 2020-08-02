@@ -1,8 +1,8 @@
-package np.com.susonthapa.core.ui.common
+package np.com.susonthapa.moviesusf.presentation.usf
 
 import com.jakewharton.rxrelay3.PublishRelay
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import np.com.susonthapa.moviesusf.presentation.usf.*
+import np.com.susonthapa.core.ui.common.BaseFragment
 import timber.log.Timber
 
 /**

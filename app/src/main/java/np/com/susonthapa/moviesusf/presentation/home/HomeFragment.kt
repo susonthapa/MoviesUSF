@@ -2,20 +2,17 @@ package np.com.susonthapa.moviesusf.presentation.home
 
 import android.content.Context
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.jakewharton.rxbinding4.view.clicks
 import io.reactivex.rxjava3.core.Observable
-import np.com.susonthapa.core.ui.common.UBaseFragment
+import np.com.susonthapa.moviesusf.presentation.usf.UBaseFragment
 import np.com.susonthapa.moviesusf.BaseApplication
-import np.com.susonthapa.moviesusf.R
 import np.com.susonthapa.moviesusf.databinding.FragmentHomeBinding
 import np.com.susonthapa.moviesusf.di.ViewModelFactory
 import np.com.susonthapa.moviesusf.domain.DataStatus
@@ -68,7 +65,8 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
     }
 
     override fun render(state: HomeState) {
-        state.searchResult?.getValueIfChanged()?.let {
+        Timber.d("------ rendering state: $state")
+        state.searchResult.getValueIfChanged()?.let {
             Timber.d("------ rendering search results: $it")
             adapter.submitList(it)
         }
@@ -110,6 +108,7 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
     }
 
     override fun trigger(effect: HomeEffects) {
+        Timber.d("------ triggering effect: $effect")
         when (effect) {
             is NavigateToDetailsEffect -> {
                 findNavController().navigate(HomeFragmentDirections.actionHomeFragmentToDetailsFragment(effect.movie))
