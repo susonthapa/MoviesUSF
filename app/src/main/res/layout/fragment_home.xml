@@ -9,10 +9,10 @@
     <EditText
         android:id="@+id/search_edit_text"
         android:layout_width="0dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginTop="16dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
         app:layout_constraintEnd_toStartOf="@id/search_button"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -22,43 +22,46 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginEnd="16dp"
-        android:padding="8dp"
-        app:layout_constraintDimensionRatio="W, 1:1"
         android:background="@drawable/background_circle"
-        android:src="@drawable/ic_search_24"
+        android:padding="8dp"
         android:scaleType="fitCenter"
+        android:src="@drawable/ic_search_24"
         app:layout_constraintBottom_toBottomOf="@id/search_edit_text"
+        app:layout_constraintDimensionRatio="W, 1:1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/search_edit_text" />
 
     <ProgressBar
         android:id="@+id/search_indicator"
         style="?android:attr/progressBarStyleHorizontal"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/search_edit_text"
-        android:indeterminate="true"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/search_edit_text" />
 
     <np.com.susonthapa.lceerecyclerviewdemo.LCEERecyclerView
         android:id="@+id/search_result_list"
-        app:layout_constraintTop_toBottomOf="@id/search_indicator"
-        app:layout_constraintStart_toStartOf="@id/search_edit_text"
-        app:layout_constraintEnd_toEndOf="@id/search_button"
-        app:layout_constraintBottom_toTopOf="@id/favorite_list"
-        android:layout_marginBottom="16dp"
-        android:layout_marginTop="8dp"
         android:layout_width="0dp"
-        android:layout_height="0dp"/>
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toTopOf="@id/movies_history"
+        app:layout_constraintEnd_toEndOf="@id/search_button"
+        app:layout_constraintStart_toStartOf="@id/search_edit_text"
+        app:layout_constraintTop_toBottomOf="@id/search_indicator" />
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/favorite_list"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:id="@+id/movies_history"
         android:layout_width="0dp"
-        android:layout_height="120dp"/>
+        android:layout_height="120dp"
+        android:visibility="gone"
+        tools:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

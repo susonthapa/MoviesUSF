@@ -18,5 +18,9 @@
         android:id="@+id/detailsFragment"
         android:name="np.com.susonthapa.moviesusf.presentation.details.DetailsFragment"
         android:label="fragment_details"
-        tools:layout="@layout/fragment_details" />
+        tools:layout="@layout/fragment_details" >
+        <argument
+            android:name="movie"
+            app:argType="np.com.susonthapa.moviesusf.domain.Movies" />
+    </fragment>
 </navigation>

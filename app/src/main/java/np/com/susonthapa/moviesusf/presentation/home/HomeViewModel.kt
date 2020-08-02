@@ -28,7 +28,8 @@ class HomeViewModel @Inject constructor(
                 arrayListOf(
                     o.ofType(ScreenLoadEvent::class.java).map { ScreenLoadResult },
                     o.ofType(SearchMovieEvent::class.java).compose(searchMovie()),
-                    o.ofType(AddMovieToHistoryEvent::class.java).compose(addMovieToHistory())
+                    o.ofType(AddMovieToHistoryEvent::class.java).compose(addMovieToHistory()),
+                    o.ofType(LoadMovieDetailsEvent::class.java).compose(loadMovieDetails())
                 )
             )
         }
@@ -64,8 +65,12 @@ class HomeViewModel @Inject constructor(
     }
 
     override fun resultToEffect(results: Observable<out HomeResults>): Observable<HomeEffects> {
-        return results.map {
-            when (results) {
+        return results.map {result ->
+            when (result) {
+                is LoadMovieDetailsResult -> {
+                    NavigateToDetailsEffect(result.movie)
+                }
+
                 else -> {
                     NoEffect
                 }
@@ -74,50 +79,70 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun searchMovie(): ObservableTransformer<SearchMovieEvent, out HomeResults> {
-        return ObservableTransformer { o ->
-            o.switchMap { e ->
-                repo.getMoviesFromServer(e.query)
-                    .flatMap {
-                        when (it) {
-                            is Lce.Loading -> {
-                                Observable.just(SearchMovieStatusResult(ContentStatus.LOADING))
-                            }
+        return ObservableTransformer { observable ->
+            observable
+                .filter {
+                    it.query.isNotEmpty() || it.query.isNotBlank()
+                }
+                .switchMap { e ->
+                    repo.getMoviesFromServer(e.query)
+                        .flatMap {
+                            when (it) {
+                                is Lce.Loading -> {
+                                    Observable.just(SearchMovieStatusResult(ContentStatus.LOADING))
+                                }
 
-                            is Lce.Content -> {
-                                if (it.packet.isEmpty()) {
-                                    Observable.just(SearchMovieStatusResult(ContentStatus.EMPTY))
-                                } else {
-                                    Observable.just(SearchMovieResult(it.packet))
+                                is Lce.Content -> {
+                                    if (it.packet.isEmpty()) {
+                                        Observable.just(SearchMovieStatusResult(ContentStatus.EMPTY))
+                                    } else {
+                                        Observable.just(
+                                            SearchMovieStatusResult(ContentStatus.LOADED),
+                                            SearchMovieResult(it.packet)
+                                        )
+                                    }
+                                }
+
+                                is Lce.Error -> {
+                                    Observable.just(SearchMovieStatusResult(ContentStatus.error(it.throwable?.message)))
                                 }
                             }
-
-                            is Lce.Error -> {
-                                Observable.just(SearchMovieStatusResult(ContentStatus.error(it.throwable?.message)))
-                            }
                         }
-                    }
-            }
+                }
         }
     }
 
     private fun addMovieToHistory(): ObservableTransformer<AddMovieToHistoryEvent, out HomeResults> {
-        return ObservableTransformer { o ->
-            o.withLatestFrom(
-                state,
-                BiFunction<AddMovieToHistoryEvent, HomeState, HomeResults> { event, state ->
-                    val currentMovie = state.searchResult?.value[event.position]
-                    val currentHistory = state.history.value
-                    val isMovieInHistory = currentHistory.find {
-                        it.id == currentMovie.id
-                    } != null
-                    if (isMovieInHistory) {
-                        NoResult
-                    } else {
-                        val newHistory = currentHistory.toMutableList()
-                        newHistory.add(currentMovie)
-                        AddMovieToHistoryResult(newHistory)
-                    }
-                })
+        return ObservableTransformer { observable ->
+            observable
+                .withLatestFrom(
+                    state,
+                    BiFunction<AddMovieToHistoryEvent, HomeState, HomeResults> { event, state ->
+                        val currentMovie = state.searchResult?.value[event.position]
+                        val currentHistory = state.history.value
+                        val isMovieInHistory = currentHistory.find {
+                            it.id == currentMovie.id
+                        } != null
+                        if (isMovieInHistory) {
+                            NoResult
+                        } else {
+                            val newHistory = currentHistory.toMutableList()
+                            newHistory.add(currentMovie)
+                            AddMovieToHistoryResult(newHistory)
+                        }
+                    })
+        }
+    }
+
+    private fun loadMovieDetails(): ObservableTransformer<LoadMovieDetailsEvent, LoadMovieDetailsResult> {
+        return ObservableTransformer { observable ->
+            observable
+                .withLatestFrom(
+                    state,
+                    BiFunction<LoadMovieDetailsEvent, HomeState, LoadMovieDetailsResult> { event, state ->
+                        val movie = state.searchResult.value[event.position]
+                        LoadMovieDetailsResult(movie)
+                    })
         }
     }
 

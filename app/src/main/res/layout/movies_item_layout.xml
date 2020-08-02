@@ -25,7 +25,7 @@
         android:textColor="#000000"
         android:textSize="25sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toStartOf="@id/movie_remove"
+        app:layout_constraintEnd_toStartOf="@id/movie_add_to_history"
         app:layout_constraintHorizontal_bias="0"
         app:layout_constraintStart_toEndOf="@id/movie_image"
         app:layout_constraintTop_toTopOf="@id/movie_image" />
@@ -53,11 +53,10 @@
         app:layout_constraintTop_toBottomOf="@id/movie_type" />
 
     <ImageButton
-        android:id="@+id/movie_remove"
+        android:id="@+id/movie_add_to_history"
         android:layout_width="32dp"
         android:layout_height="32dp"
-        android:background="@null"
-        android:backgroundTint="?attr/selectableItemBackground"
+        android:background="?attr/selectableItemBackground"
         android:scaleType="fitCenter"
         android:src="@drawable/ic_add_circle"
         app:layout_constraintBottom_toBottomOf="parent"

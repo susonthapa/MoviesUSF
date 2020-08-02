@@ -65,11 +65,18 @@ class HomeViewModelTest {
     fun whenSearchMovie_AndMovieFound_ShowResults() {
         viewModel.processEvent(SearchMovieEvent("blade"))
 
-        stateTester.assertValueCount(4)
-        stateTester.assertValueAt(3) {
+        stateTester.assertValueCount(5)
+        stateTester.assertValueAt(4) {
             assertThat(it.searchResult.value.size).isEqualTo(movies.size)
             true
         }
+    }
+
+    @Test
+    fun whenSearchMovie_AndQueryEmpty_NoSearch() {
+        viewModel.processEvent(SearchMovieEvent(""))
+
+        stateTester.assertValueCount(2)
     }
 
     @Test
@@ -118,6 +125,18 @@ class HomeViewModelTest {
         viewModel.processEvent(AddMovieToHistoryEvent(0))
 
         stateTester.assertValueCount(5)
+    }
+
+    @Test
+    fun whenMovieClick_LoadMovieDetails() {
+        whenSearchMovie_AndMovieFound_ShowResults()
+        viewModel.processEvent(LoadMovieDetailsEvent(0))
+
+        effectTester.assertValueCount(5)
+        effectTester.assertValueAt(4) {
+            assertThat(it::class.java).isAssignableTo(NavigateToDetailsEffect::class.java)
+            true
+        }
     }
 
 

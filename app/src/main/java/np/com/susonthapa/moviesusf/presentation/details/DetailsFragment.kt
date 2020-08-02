@@ -5,14 +5,17 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.navigation.fragment.navArgs
+import np.com.susonthapa.core.ui.common.BaseFragment
 import np.com.susonthapa.moviesusf.R
 import np.com.susonthapa.moviesusf.databinding.FragmentDetailsBinding
 
-class DetailsFragment : Fragment() {
+class DetailsFragment : BaseFragment() {
 
-    private var _binding: FragmentDetailsBinding? = null
     private val binding: FragmentDetailsBinding
-        get() = _binding!!
+        get() = _binding!! as FragmentDetailsBinding
+
+    private val args: DetailsFragmentArgs by navArgs()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -26,10 +29,11 @@ class DetailsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        binding.apply {
+            detailsDraweeView.setImageURI(args.movie.image)
+            detailsTitleText.text = args.movie.title
+        }
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
 }
