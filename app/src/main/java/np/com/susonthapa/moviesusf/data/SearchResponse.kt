@@ -1,4 +1,4 @@
-package np.com.susonthapa.ssotmovies.network
+package np.com.susonthapa.moviesusf.data
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass

@@ -1,4 +1,4 @@
-package np.com.susonthapa.ssotmovies.di
+package np.com.susonthapa.moviesusf.di
 
 import dagger.Module
 import dagger.Provides

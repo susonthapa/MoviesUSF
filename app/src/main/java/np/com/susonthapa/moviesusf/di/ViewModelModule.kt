@@ -1,11 +1,14 @@
 package np.com.susonthapa.moviesusf.di
 
 import androidx.lifecycle.ViewModel
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.multibindings.IntoMap
+import np.com.susonthapa.moviesusf.data.MoviesRepository
 import np.com.susonthapa.moviesusf.di.ViewModelFactory
 import np.com.susonthapa.moviesusf.di.ViewModelKey
+import np.com.susonthapa.moviesusf.presentation.home.HomeViewModel
 import javax.inject.Provider
 
 /**
@@ -14,5 +17,15 @@ import javax.inject.Provider
 
 @Module
 class ViewModelModule {
+    @Provides
+    fun provideViewModelFactory(providerMap: MutableMap<Class<out ViewModel>, Provider<ViewModel>>): ViewModelFactory {
+        return ViewModelFactory(providerMap)
+    }
 
+    @Provides
+    @IntoMap
+    @ViewModelKey(HomeViewModel::class)
+    fun bindHomeViewModel(repo: MoviesRepository): ViewModel {
+        return HomeViewModel(repo)
+    }
 }

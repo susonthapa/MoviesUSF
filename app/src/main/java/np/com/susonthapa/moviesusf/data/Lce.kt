@@ -1,4 +1,4 @@
-package np.com.susonthapa.ssotmovies.repository
+package np.com.susonthapa.moviesusf.data
 
 sealed class Lce<T> {
     class Loading<T> : Lce<T>()
