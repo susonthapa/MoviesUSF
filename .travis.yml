@@ -8,7 +8,6 @@ android:
     - build-tools-29.0.3
     - android-29
 before_script:
-  - mkdir $HOME/.gradle
-  - echo "omdb_api_key=\"$OMDB_API_KEY\"" > $HOME/.gradle/gradle.properties
+  - echo "omdb_api_key=\"$OMDB_API_KEY\"" >> $HOME/.gradle/gradle.properties
 script:
   - ./gradlew test
