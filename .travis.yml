@@ -12,6 +12,7 @@ env:
 
 before_install:
   - wget "https://dl.google.com/android/repository/commandlinetools-linux-6609375_latest.zip" -O commandlinetools.zip
+  - mkdir ~/android-sdk
   - unzip commandlinetools.zip -d $ANDROID_HOME/cmdline-tools/
   - PATH=${PATH}:${ANDROID_HOME}/cmdline-tools/tools/bin
   - yes | sdkmanager --licenses
