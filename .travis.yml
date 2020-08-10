@@ -1,13 +1,39 @@
-language: android
-jdk: oraclejdk8
-dist: trusty
-android:
-  components:
-    - tools
-    - platform-tools
-    - build-tools-29.0.3
-    - android-29
+dist: bionic
+os: linux
+language: generic
+
+env:
+  global:
+    - TARGET_VERSION=29
+    - ANDROID_BUILD_TOOLS_VERSION=29.0.3
+    - GRADLE_OPTS='-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Dkotlin-incremental=false'
+    - ANDROID_HOME=~/android-sdk
+
+before_install:
+  - wget "https://dl.google.com/android/repository/commandlinetools-linux-6609375_latest.zip" -O commandlinetools.zip
+  - mkdir ~/android-sdk
+  - unzip commandlinetools.zip -d $ANDROID_HOME/cmdline-tools/
+  - PATH=${PATH}:${ANDROID_HOME}/cmdline-tools/tools/bin
+  - yes | sdkmanager --licenses
+  - sdkmanager "build-tools;$ANDROID_BUILD_TOOLS_VERSION" "platforms;android-$TARGET_VERSION"
+  - sdkmanager --list | head -10
+
 before_script:
   - echo "omdb_api_key=\"$OMDB_API_KEY\"" >> $HOME/.gradle/gradle.properties
+
 script:
   - ./gradlew test
+  - ./gradlew jacocoTestReport
+
+before_cache:
+  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -rf $HOME/.gradle/caches/*/plugin-resolution/
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.android/build-cache
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
