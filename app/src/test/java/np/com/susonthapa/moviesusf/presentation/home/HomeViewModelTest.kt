@@ -149,6 +149,18 @@ class HomeViewModelTest {
         }
     }
 
+    @Test
+    fun whenViewHistoryClick_NavigateToHistory() {
+        whenSearchMovie_AndMovieFound_ShowResults()
+        viewModel.processEvent(ViewHistoryEvent)
+
+        effectTester.assertValueCount(5)
+        effectTester.assertValueAt(4) {
+            assertThat(it::class.java).isAssignableTo(NavigateToHistoryEffect::class.java)
+            true
+        }
+    }
+
 
 
     // setup the default schedulers

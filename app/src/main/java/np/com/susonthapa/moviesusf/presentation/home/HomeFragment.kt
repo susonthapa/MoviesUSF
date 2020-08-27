@@ -50,7 +50,7 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        adapter = SearchResultAdapter(object: SearchResultClickListener {
+        adapter = SearchResultAdapter(object : SearchResultClickListener {
 
             override fun onResultClick(position: Int) {
                 generalEvents.accept(LoadMovieDetailsEvent(position))
@@ -64,7 +64,8 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
         binding.searchResultList.recyclerView.adapter = adapter
         historyAdapter = HistoryAdapter()
         binding.moviesHistory.adapter = historyAdapter
-        binding.moviesHistory.layoutManager = LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
+        binding.moviesHistory.layoutManager =
+            LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
         initializeReducer(viewModel)
     }
 
@@ -79,9 +80,9 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
             Timber.d("------ rendering history: $it")
             historyAdapter.submitList(it)
             if (it.isNotEmpty()) {
-                binding.moviesHistory.visibility = View.VISIBLE
+                showHistory()
             } else {
-                binding.moviesHistory.visibility = View.GONE
+                hideHistory()
             }
         }
 
@@ -116,12 +117,14 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
                 val scaleFactor = 0.2f
                 val growX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1f + scaleFactor)
                 val growY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f + scaleFactor)
-                val growAnimation = ObjectAnimator.ofPropertyValuesHolder(binding.searchButton, growX, growY)
+                val growAnimation =
+                    ObjectAnimator.ofPropertyValuesHolder(binding.searchButton, growX, growY)
                 growAnimation.interpolator = OvershootInterpolator()
 
                 val shrinkX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1f)
                 val shrinkY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f)
-                val shrinkAnimation = ObjectAnimator.ofPropertyValuesHolder(binding.searchButton, shrinkX, shrinkY)
+                val shrinkAnimation =
+                    ObjectAnimator.ofPropertyValuesHolder(binding.searchButton, shrinkX, shrinkY)
                 shrinkAnimation.interpolator = OvershootInterpolator()
 
                 val animSet = AnimatorSet()
@@ -135,23 +138,57 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
         Timber.d("------ triggering effect: $effect")
         when (effect) {
             is NavigateToDetailsEffect -> {
-                findNavController().navigate(HomeFragmentDirections.actionHomeFragmentToDetailsFragment(effect.movie))
+                findNavController().navigate(
+                    HomeFragmentDirections.actionHomeFragmentToDetailsFragment(
+                        effect.movie
+                    )
+                )
             }
+
+            is NavigateToHistoryEffect -> {
+                findNavController().navigate(
+                    HomeFragmentDirections.actionHomeFragmentToHistoryFragment(
+                        effect.movies.toTypedArray()
+                    )
+                )
+            }
+        }
+    }
+
+    private fun showHistory() {
+        binding.apply {
+            homeHistoryViewAll.visibility = View.VISIBLE
+            homeMovieHistoryLabel.visibility = View.VISIBLE
+            binding.moviesHistory.visibility = View.VISIBLE
+        }
+    }
+
+    private fun hideHistory() {
+        binding.apply {
+            homeHistoryViewAll.visibility = View.GONE
+            homeMovieHistoryLabel.visibility = View.GONE
+            binding.moviesHistory.visibility = View.GONE
         }
     }
 
     override fun onResume() {
         super.onResume()
-        val screenLoadEvent: Observable<ScreenLoadEvent> = Observable.just(ScreenLoadEvent(isRestoredFromBackStack))
+        val screenLoadEvent: Observable<ScreenLoadEvent> =
+            Observable.just(ScreenLoadEvent(isRestoredFromBackStack))
         val searchMovieEvent: Observable<SearchMovieEvent> = binding.searchButton.clicks()
             .map {
                 SearchMovieEvent(binding.searchEditText.text.toString())
+            }
+        val viewHistoryEvent: Observable<ViewHistoryEvent> = binding.homeHistoryViewAll.clicks()
+            .map {
+                ViewHistoryEvent
             }
 
         uiDisposable = Observable.merge(
             arrayListOf(
                 screenLoadEvent,
                 searchMovieEvent,
+                viewHistoryEvent,
                 generalEvents
             )
         ).subscribe({

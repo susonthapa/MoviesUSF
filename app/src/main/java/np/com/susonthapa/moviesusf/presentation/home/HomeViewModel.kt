@@ -13,6 +13,7 @@ import np.com.susonthapa.moviesusf.presentation.home.HomeEffects.*
 import np.com.susonthapa.moviesusf.presentation.home.HomeEvents.*
 import np.com.susonthapa.moviesusf.presentation.home.HomeResults.*
 import np.com.susonthapa.moviesusf.utils.withLatestFrom
+import np.com.susonthapa.moviesusf.utils.withLatestStateBox
 
 /**
  * Created by suson on 8/1/20
@@ -28,7 +29,8 @@ class HomeViewModel @Inject constructor(
                     o.ofType(ScreenLoadEvent::class.java).map { ScreenLoadResult(it.isRestored) },
                     o.ofType(SearchMovieEvent::class.java).compose(searchMovie()),
                     o.ofType(AddMovieToHistoryEvent::class.java).compose(addMovieToHistory()),
-                    o.ofType(LoadMovieDetailsEvent::class.java).compose(loadMovieDetails())
+                    o.ofType(LoadMovieDetailsEvent::class.java).compose(loadMovieDetails()),
+                    o.ofType(ViewHistoryEvent::class.java).compose(viewHistory())
                 )
             )
         }
@@ -80,6 +82,10 @@ class HomeViewModel @Inject constructor(
             when (result) {
                 is LoadMovieDetailsResult -> {
                     NavigateToDetailsEffect(result.movie)
+                }
+
+                is ViewHistoryResult -> {
+                    NavigateToHistoryEffect(result.movies)
                 }
 
                 else -> {
@@ -143,9 +149,10 @@ class HomeViewModel @Inject constructor(
     private fun addMovieToHistory(): ObservableTransformer<AddMovieToHistoryEvent, out HomeResults> {
         return ObservableTransformer { observable ->
             observable
-                .withLatestFrom(mState) { event, state ->
-                    val currentMovie = state.searchResult?.value[event.position]
-                    val currentHistory = state.history.value
+                .withLatestStateBox(mState)
+                .map { s ->
+                    val currentMovie = s.state.searchResult?.value[s.event.position]
+                    val currentHistory = s.state.history.value
                     val isMovieInHistory = currentHistory.find {
                         it.id == currentMovie.id
                     } != null
@@ -163,9 +170,20 @@ class HomeViewModel @Inject constructor(
     private fun loadMovieDetails(): ObservableTransformer<LoadMovieDetailsEvent, LoadMovieDetailsResult> {
         return ObservableTransformer { observable ->
             observable
-                .withLatestFrom(mState) { event, state ->
-                    val movie = state.searchResult.value[event.position]
+                .withLatestStateBox(mState)
+                .map { s ->
+                    val movie = s.state.searchResult.value[s.event.position]
                     LoadMovieDetailsResult(movie)
+                }
+        }
+    }
+
+    private fun viewHistory(): ObservableTransformer<ViewHistoryEvent, ViewHistoryResult> {
+        return ObservableTransformer { upstream ->
+            upstream.withLatestStateBox(mState)
+                .map { s ->
+                    val history = s.state.history.value
+                    ViewHistoryResult(history)
                 }
         }
     }

@@ -47,21 +47,46 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="8dp"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toTopOf="@id/movies_history"
+        app:layout_constraintBottom_toTopOf="@id/home_history_view_all"
         app:layout_constraintEnd_toEndOf="@id/search_button"
         app:layout_constraintStart_toStartOf="@id/search_edit_text"
         app:layout_constraintTop_toBottomOf="@id/search_indicator" />
+
+    <TextView
+        android:id="@+id/home_movie_history_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:text="History"
+        android:textAppearance="?attr/textAppearanceHeadline6"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/home_history_view_all"
+        app:layout_constraintEnd_toStartOf="@id/home_history_view_all"
+        app:layout_constraintHorizontal_bias="0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/home_history_view_all" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/home_history_view_all"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:visibility="gone"
+        android:text="View"
+        app:layout_constraintBottom_toTopOf="@id/movies_history"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/movies_history"
         android:layout_width="0dp"
         android:layout_height="120dp"
         android:visibility="gone"
-        tools:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        tools:visibility="visible" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

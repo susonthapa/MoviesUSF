@@ -46,11 +46,13 @@ sealed class HomeEvents : Event {
     data class SearchMovieEvent(val query: String) : HomeEvents()
     data class AddMovieToHistoryEvent(val position: Int) : HomeEvents()
     data class LoadMovieDetailsEvent(val position: Int) : HomeEvents()
+    object ViewHistoryEvent : HomeEvents()
 }
 
 sealed class HomeEffects : Effect {
     data class ShowMessageEffect(val message: String) : HomeEffects()
     data class NavigateToDetailsEffect(val movie: Movies) : HomeEffects()
+    data class NavigateToHistoryEffect(val movies: List<Movies>) : HomeEffects()
     object NoEffect : HomeEffects()
 }
 
@@ -60,5 +62,6 @@ sealed class HomeResults : Result {
     data class SearchMovieStatusResult(val status: ContentStatus) : HomeResults()
     data class AddMovieToHistoryResult(val history: List<Movies>) : HomeResults()
     data class LoadMovieDetailsResult(val movie: Movies) : HomeResults()
+    data class ViewHistoryResult(val movies: List<Movies>) : HomeResults()
     object NoResult : HomeResults()
 }

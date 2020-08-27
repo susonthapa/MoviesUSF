@@ -8,6 +8,7 @@ import dagger.multibindings.IntoMap
 import np.com.susonthapa.moviesusf.data.MoviesRepository
 import np.com.susonthapa.moviesusf.di.ViewModelFactory
 import np.com.susonthapa.moviesusf.di.ViewModelKey
+import np.com.susonthapa.moviesusf.presentation.history.HistoryViewModel
 import np.com.susonthapa.moviesusf.presentation.home.HomeViewModel
 import javax.inject.Provider
 
@@ -25,7 +26,14 @@ class ViewModelModule {
     @Provides
     @IntoMap
     @ViewModelKey(HomeViewModel::class)
-    fun bindHomeViewModel(repo: MoviesRepository): ViewModel {
+    fun provideHomeViewModel(repo: MoviesRepository): ViewModel {
         return HomeViewModel(repo)
+    }
+
+    @Provides
+    @IntoMap
+    @ViewModelKey(HistoryViewModel::class)
+    fun provideHistoryViewModel(): ViewModel {
+        return HistoryViewModel()
     }
 }
