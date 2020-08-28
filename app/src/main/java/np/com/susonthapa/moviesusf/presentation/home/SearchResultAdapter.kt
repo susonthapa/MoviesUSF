@@ -1,6 +1,7 @@
 package np.com.susonthapa.moviesusf.presentation.home
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -43,8 +44,10 @@ class SearchResultViewHolder(private val binding: MoviesItemLayoutBinding) :
 
     fun bind(item: Movies, clickListener: SearchResultClickListener) {
         binding.apply {
+            root.transitionName = item.id
             root.setOnClickListener {
-                clickListener.onResultClick(adapterPosition)
+                // set the shared element transition name
+                clickListener.onResultClick(adapterPosition, root)
             }
 
             movieTitle.text = item.title
@@ -60,6 +63,6 @@ class SearchResultViewHolder(private val binding: MoviesItemLayoutBinding) :
 }
 
 interface SearchResultClickListener {
-    fun onResultClick(position: Int)
+    fun onResultClick(position: Int, sharedView: View)
     fun onAddToHistory(position: Int)
 }

@@ -25,6 +25,9 @@
         <argument
             android:name="movie"
             app:argType="np.com.susonthapa.moviesusf.domain.Movies" />
+        <argument
+            android:name="sharedElement"
+            app:argType="string" />
     </fragment>
     <fragment
         android:id="@+id/historyFragment"

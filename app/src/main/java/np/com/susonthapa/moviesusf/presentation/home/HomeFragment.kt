@@ -9,10 +9,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.OvershootInterpolator
+import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.transition.Hold
+import com.google.android.material.transition.MaterialElevationScale
 import com.jakewharton.rxbinding4.view.clicks
 import io.reactivex.rxjava3.core.Observable
 import np.com.susonthapa.moviesusf.presentation.usf.UBaseFragment
@@ -37,6 +41,31 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
     private lateinit var adapter: SearchResultAdapter
     private lateinit var historyAdapter: HistoryAdapter
 
+    private lateinit var sharedView: View
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        exitTransition = MaterialElevationScale(false)
+        reenterTransition = MaterialElevationScale(true)
+        // initialize the adapter here to restore the scroll positions when this fragment is popped from the backstack
+        // as this method is only called once for the lifetime of the fragment and this will insure that the recyclerview
+        // will have some data to display
+        // Note: This will cause memory leak if all the references to this adapter is not cleared in onDestroyView
+        adapter = SearchResultAdapter(object : SearchResultClickListener {
+
+            override fun onResultClick(position: Int, sharedView: View) {
+                this@HomeFragment.sharedView = sharedView
+                generalEvents.accept(LoadMovieDetailsEvent(position))
+            }
+
+            override fun onAddToHistory(position: Int) {
+                generalEvents.accept(AddMovieToHistoryEvent(position))
+            }
+
+        })
+        historyAdapter = HistoryAdapter()
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -50,32 +79,25 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        adapter = SearchResultAdapter(object : SearchResultClickListener {
-
-            override fun onResultClick(position: Int) {
-                generalEvents.accept(LoadMovieDetailsEvent(position))
-            }
-
-            override fun onAddToHistory(position: Int) {
-                generalEvents.accept(AddMovieToHistoryEvent(position))
-            }
-
-        })
+        // postpone the enter transition
+        postponeEnterTransition()
+        view.doOnPreDraw {
+            startPostponedEnterTransition()
+        }
         binding.searchResultList.recyclerView.adapter = adapter
-        historyAdapter = HistoryAdapter()
+        binding.moviesHistory.layoutManager = LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
         binding.moviesHistory.adapter = historyAdapter
-        binding.moviesHistory.layoutManager =
-            LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
+        // check for history items and show the history
+        // this will be true when the fragment is popped from the backstack and it had movies in the history
+        // Not showing history will cause the searchResult recycler view to take the full width and will
+        // interfere with the sharedElement transition when this fragment is popped from the backstack
+        if (historyAdapter.itemCount != 0) {
+            showHistory()
+        }
         initializeReducer(viewModel)
     }
 
     override fun render(state: HomeState) {
-        Timber.d("------ rendering state: $state")
-        state.searchResult.getValueIfChanged()?.let {
-            Timber.d("------ rendering search results: $it")
-            adapter.submitList(it)
-        }
-
         state.history.getValueIfChanged()?.let {
             Timber.d("------ rendering history: $it")
             historyAdapter.submitList(it)
@@ -85,6 +107,12 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
                 hideHistory()
             }
         }
+
+        state.searchResult.getValueIfChanged()?.let {
+            Timber.d("------ rendering search results: $it")
+            adapter.submitList(it)
+        }
+
 
         state.searchStatus.getValueIfChanged()?.let {
             Timber.d("------ rendering search result status: $it")
@@ -138,10 +166,11 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
         Timber.d("------ triggering effect: $effect")
         when (effect) {
             is NavigateToDetailsEffect -> {
+                val extras = FragmentNavigatorExtras(sharedView to effect.movie.id)
                 findNavController().navigate(
                     HomeFragmentDirections.actionHomeFragmentToDetailsFragment(
-                        effect.movie
-                    )
+                        effect.movie, effect.movie.id
+                    ), extras
                 )
             }
 
@@ -196,6 +225,13 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
         }, {
             Timber.e(it, "error in processing events")
         })
+    }
+
+    override fun onDestroyView() {
+        // reset the recycler view
+        binding.searchResultList.recyclerView.adapter = null
+        binding.moviesHistory.adapter = null
+        super.onDestroyView()
     }
 
     override fun onAttach(context: Context) {

@@ -1,6 +1,7 @@
 package np.com.susonthapa.core.ui.common
 
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
@@ -22,25 +23,36 @@ abstract class BaseFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Timber.v("Fragment onCreate ${this.javaClass.simpleName}")
+        Timber.v(this.javaClass.simpleName)
         isRestoredFromBackStack = false
     }
 
     override fun onStart() {
-        Timber.v("Fragment onStart ${this.javaClass.simpleName}")
         super.onStart()
+        Timber.v(this.javaClass.simpleName)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        Timber.v("Fragment onDestroyView ${this.javaClass.simpleName}")
+        Timber.v(this.javaClass.simpleName)
         bag.clear()
         _binding = null
         isRestoredFromBackStack = true
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        Timber.v(this.javaClass.simpleName)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Timber.v(this.javaClass.simpleName)
+    }
+
     override fun onPause() {
         super.onPause()
+        Timber.v(this.javaClass.simpleName)
         uiDisposable?.dispose()
     }
 
