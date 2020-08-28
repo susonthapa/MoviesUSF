@@ -4,6 +4,7 @@ package np.com.susonthapa.moviesusf.domain
  * Created by suson on 8/2/20
  */
 enum class DataStatus {
+    NONE,
     LOADING,
     LOADED,
     EMPTY,
@@ -22,6 +23,9 @@ data class ContentStatus constructor(
         )
         val EMPTY = ContentStatus(
             DataStatus.EMPTY
+        )
+        val NONE = ContentStatus(
+            DataStatus.NONE
         )
         fun error(msg: String?) =
             ContentStatus(

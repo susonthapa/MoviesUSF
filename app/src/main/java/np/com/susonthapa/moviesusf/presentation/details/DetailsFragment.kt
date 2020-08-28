@@ -10,6 +10,7 @@ import com.google.android.material.transition.MaterialContainerTransform
 import np.com.susonthapa.core.ui.common.BaseFragment
 import np.com.susonthapa.moviesusf.R
 import np.com.susonthapa.moviesusf.databinding.FragmentDetailsBinding
+import np.com.susonthapa.moviesusf.utils.themeInt
 
 class DetailsFragment : BaseFragment() {
 
@@ -17,10 +18,14 @@ class DetailsFragment : BaseFragment() {
         get() = _binding!! as FragmentDetailsBinding
 
     private val args: DetailsFragmentArgs by navArgs()
+    private var animDuration: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val transform = MaterialContainerTransform()
+        animDuration = requireContext().themeInt(R.attr.animDuration).toLong()
+        val transform = MaterialContainerTransform().apply {
+            duration = animDuration
+        }
         sharedElementEnterTransition = transform
     }
 

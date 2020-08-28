@@ -9,14 +9,17 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.transition.MaterialSharedAxis
 import io.reactivex.rxjava3.core.Observable
 import np.com.susonthapa.moviesusf.BaseApplication
+import np.com.susonthapa.moviesusf.R
 import np.com.susonthapa.moviesusf.databinding.FragmentHistoryBinding
 import np.com.susonthapa.moviesusf.di.ViewModelFactory
 import np.com.susonthapa.moviesusf.presentation.usf.UBaseFragment
 import javax.inject.Inject
 import np.com.susonthapa.moviesusf.presentation.history.HistoryEvents.*
 import np.com.susonthapa.moviesusf.presentation.history.HistoryEffects.*
+import np.com.susonthapa.moviesusf.utils.themeInt
 import timber.log.Timber
 
 /**
@@ -34,6 +37,18 @@ class HistoryFragment : UBaseFragment<HistoryEvents, HistoryState, HistoryEffect
     private lateinit var historyAdapter: HistoryListAdapter
 
     private val args: HistoryFragmentArgs by navArgs()
+    private var animDuration: Long = 0
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        animDuration = requireContext().themeInt(R.attr.animDuration).toLong()
+        enterTransition = MaterialSharedAxis(MaterialSharedAxis.Z, true).apply {
+            duration = animDuration
+        }
+        returnTransition = MaterialSharedAxis(MaterialSharedAxis.Z, false).apply {
+            duration = animDuration
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,

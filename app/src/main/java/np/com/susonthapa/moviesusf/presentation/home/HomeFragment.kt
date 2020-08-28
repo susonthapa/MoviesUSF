@@ -4,23 +4,35 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder
 import android.content.Context
+import android.graphics.Color
+import android.graphics.Movie
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.OvershootInterpolator
+import android.view.inputmethod.EditorInfo
+import android.widget.EditText
+import android.widget.LinearLayout
+import androidx.appcompat.graphics.drawable.DrawerArrowDrawable
 import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.transition.TransitionManager
 import com.google.android.material.transition.Hold
+import com.google.android.material.transition.MaterialContainerTransform
 import com.google.android.material.transition.MaterialElevationScale
+import com.google.android.material.transition.MaterialSharedAxis
 import com.jakewharton.rxbinding4.view.clicks
+import com.jakewharton.rxbinding4.widget.textChanges
 import io.reactivex.rxjava3.core.Observable
 import np.com.susonthapa.moviesusf.presentation.usf.UBaseFragment
 import np.com.susonthapa.moviesusf.BaseApplication
+import np.com.susonthapa.moviesusf.R
 import np.com.susonthapa.moviesusf.databinding.FragmentHomeBinding
 import np.com.susonthapa.moviesusf.di.ViewModelFactory
 import np.com.susonthapa.moviesusf.domain.DataStatus
@@ -28,6 +40,7 @@ import timber.log.Timber
 import javax.inject.Inject
 import np.com.susonthapa.moviesusf.presentation.home.HomeEvents.*
 import np.com.susonthapa.moviesusf.presentation.home.HomeEffects.*
+import np.com.susonthapa.moviesusf.utils.themeInt
 
 class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
 
@@ -40,13 +53,14 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
 
     private lateinit var adapter: SearchResultAdapter
     private lateinit var historyAdapter: HistoryAdapter
+    private lateinit var suggestionAdapter: SuggestionAdapter
 
     private lateinit var sharedView: View
+    private var animDuration: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        exitTransition = MaterialElevationScale(false)
-        reenterTransition = MaterialElevationScale(true)
+        animDuration = requireContext().themeInt(R.attr.animDuration).toLong()
         // initialize the adapter here to restore the scroll positions when this fragment is popped from the backstack
         // as this method is only called once for the lifetime of the fragment and this will insure that the recyclerview
         // will have some data to display
@@ -94,7 +108,77 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
         if (historyAdapter.itemCount != 0) {
             showHistory()
         }
+        setupSearchView()
         initializeReducer(viewModel)
+    }
+
+    private fun setupSearchView() {
+        binding.apply {
+            searchToolbar.navigationIcon = getBackArrow(requireContext())
+            searchToolbar.setNavigationOnClickListener {
+                dummySearchField.setText("")
+                dummySearchField.setHint(R.string.search_hint)
+                hideSearchView()
+            }
+
+            searchEditField.setOnEditorActionListener { v, actionId, event ->
+                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                    handleSearch(v.text.toString())
+                    true
+                } else {
+                    false
+                }
+            }
+
+            dummySearchField.setOnClickListener {
+                showSearchView()
+            }
+            suggestionAdapter = SuggestionAdapter {
+                handleSearch(it)
+            }
+
+            searchSuggestionList.adapter = suggestionAdapter
+        }
+    }
+
+    private fun handleSearch(query: String) {
+        generalEvents.accept(SearchMovieEvent(query))
+        binding.dummySearchField.setText(query)
+        hideSearchView()
+    }
+
+    private fun showSearchView() {
+        val transform = MaterialContainerTransform().apply {
+            startView = binding.dummySearchField
+            endView = binding.searchLayout
+
+            addTarget(endView as LinearLayout)
+        }
+        TransitionManager.beginDelayedTransition(binding.root, transform)
+        binding.searchLayout.visibility = View.VISIBLE
+        binding.searchEditField.requestFocus()
+        binding.searchEditField.setText("")
+        showInputKeyboard()
+    }
+
+    private fun hideSearchView() {
+        val transform = MaterialContainerTransform().apply {
+            startView = binding.searchLayout
+            endView = binding.dummySearchField
+
+            addTarget(endView as EditText)
+        }
+        TransitionManager.beginDelayedTransition(binding.root, transform)
+        binding.searchLayout.visibility = View.GONE
+        binding.searchEditField.setText("")
+        hideInputKeyboard()
+    }
+
+
+    private fun getBackArrow(context: Context): Drawable {
+        val arrow = DrawerArrowDrawable(context)
+        arrow.progress = 1f
+        return arrow
     }
 
     override fun render(state: HomeState) {
@@ -113,52 +197,70 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
             adapter.submitList(it)
         }
 
-
         state.searchStatus.getValueIfChanged()?.let {
             Timber.d("------ rendering search result status: $it")
             when (it.status) {
+                DataStatus.NONE -> {
+                    binding.searchResultList.hideAllViews()
+                }
+
                 DataStatus.LOADING -> {
-                    binding.searchIndicator.visibility = View.VISIBLE
+                    binding.searchResultList.showLoadingView()
                 }
 
                 DataStatus.LOADED -> {
-                    binding.searchIndicator.visibility = View.GONE
                     binding.searchResultList.hideAllViews()
                 }
 
                 DataStatus.EMPTY -> {
-                    binding.searchIndicator.visibility = View.GONE
                     binding.searchResultList.showEmptyView()
                 }
 
                 DataStatus.ERROR -> {
-                    binding.searchIndicator.visibility = View.GONE
                     binding.searchResultList.showErrorView(it.msg)
                 }
+            }
+        }
 
+        state.searchSuggestions.getValueIfChanged()?.let {
+            Timber.d("------ rendering search suggestions: $it")
+            suggestionAdapter.submitList(it)
+        }
+
+        state.suggestionStatus.getValueIfChanged()?.let {
+            Timber.d("------ rendering search suggestion status: $it")
+            when (it.status) {
+
+                DataStatus.LOADING -> {
+                    binding.searchProgress.visibility = View.VISIBLE
+                }
+
+                else -> {
+                    binding.searchProgress.visibility = View.INVISIBLE
+                }
             }
         }
 
         state.searchAnimation.getValueIfChanged()?.let {
-            Timber.d("------ rendering animation of search: $it")
-            if (it.isAnimated) {
-                val scaleFactor = 0.2f
-                val growX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1f + scaleFactor)
-                val growY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f + scaleFactor)
-                val growAnimation =
-                    ObjectAnimator.ofPropertyValuesHolder(binding.searchButton, growX, growY)
-                growAnimation.interpolator = OvershootInterpolator()
-
-                val shrinkX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1f)
-                val shrinkY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f)
-                val shrinkAnimation =
-                    ObjectAnimator.ofPropertyValuesHolder(binding.searchButton, shrinkX, shrinkY)
-                shrinkAnimation.interpolator = OvershootInterpolator()
-
-                val animSet = AnimatorSet()
-                animSet.playSequentially(growAnimation, shrinkAnimation)
-                animSet.start()
-            }
+//            Timber.d("------ rendering animation of search: $it")
+//            if (it.isAnimated) {
+//                val scaleFactor = 0.2f
+//                val growX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1f + scaleFactor)
+//                val growY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f + scaleFactor)
+//                val growAnimation =
+//                    ObjectAnimator.ofPropertyValuesHolder(binding.searchButton, growX, growY)
+//                growAnimation.interpolator = OvershootInterpolator()
+//
+//                val shrinkX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1f)
+//                val shrinkY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f)
+//                val shrinkAnimation =
+//                    ObjectAnimator.ofPropertyValuesHolder(binding.searchButton, shrinkX, shrinkY)
+//                shrinkAnimation.interpolator = OvershootInterpolator()
+//
+//                val animSet = AnimatorSet()
+//                animSet.playSequentially(growAnimation, shrinkAnimation)
+//                animSet.start()
+//            }
         }
     }
 
@@ -166,6 +268,13 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
         Timber.d("------ triggering effect: $effect")
         when (effect) {
             is NavigateToDetailsEffect -> {
+                // configure the transition here as other events have different transitions
+                exitTransition = MaterialElevationScale(false).apply {
+                    duration = animDuration
+                }
+                reenterTransition = MaterialElevationScale(true).apply {
+                    duration = animDuration
+                }
                 val extras = FragmentNavigatorExtras(sharedView to effect.movie.id)
                 findNavController().navigate(
                     HomeFragmentDirections.actionHomeFragmentToDetailsFragment(
@@ -175,6 +284,12 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
             }
 
             is NavigateToHistoryEffect -> {
+                reenterTransition = MaterialSharedAxis(MaterialSharedAxis.Z, false).apply {
+                    duration = animDuration
+                }
+                exitTransition = MaterialSharedAxis(MaterialSharedAxis.Z, true).apply {
+                    duration = animDuration
+                }
                 findNavController().navigate(
                     HomeFragmentDirections.actionHomeFragmentToHistoryFragment(
                         effect.movies.toTypedArray()
@@ -204,9 +319,10 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
         super.onResume()
         val screenLoadEvent: Observable<ScreenLoadEvent> =
             Observable.just(ScreenLoadEvent(isRestoredFromBackStack))
-        val searchMovieEvent: Observable<SearchMovieEvent> = binding.searchButton.clicks()
+        val searchMovieEvent: Observable<MovieTypingEvent> = binding.searchEditField.textChanges()
+            .skipInitialValue()
             .map {
-                SearchMovieEvent(binding.searchEditText.text.toString())
+                MovieTypingEvent(it.toString())
             }
         val viewHistoryEvent: Observable<ViewHistoryEvent> = binding.homeHistoryViewAll.clicks()
             .map {

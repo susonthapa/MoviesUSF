@@ -37,6 +37,10 @@ class HomeViewModelTest {
         Movies("224", "blade", "2019", "action", "image.png")
     ).toMutableList()
 
+    private val suggestions: List<String> = movies.map {
+        "${it.title} (${it.year})"
+    }
+
     @Before
     fun setup() {
         // mock the api
@@ -62,8 +66,8 @@ class HomeViewModelTest {
     fun whenSearchMovie_AndMovieFound_ShowResults() {
         viewModel.processEvent(SearchMovieEvent("blade"))
 
-        stateTester.assertValueCount(4)
-        stateTester.assertValueAt(3) {
+        stateTester.assertValueCount(5)
+        stateTester.assertValueAt(4) {
             assertThat(it.searchResult.value.size).isEqualTo(movies.size)
             true
         }
@@ -81,10 +85,33 @@ class HomeViewModelTest {
         movies.clear()
         viewModel.processEvent(SearchMovieEvent("blade"))
 
-        stateTester.assertValueCount(4)
-        stateTester.assertValueAt(3) {
+        stateTester.assertValueCount(5)
+        stateTester.assertValueAt(4) {
             assertThat(it.searchStatus.value).isEqualTo(ContentStatus.EMPTY)
             assertThat(it.searchResult.value.isEmpty()).isTrue()
+            true
+        }
+    }
+
+    @Test
+    fun whenSearchMovie_ClearSuggestions() {
+        whenMovieTyping_ShowSuggestions()
+        viewModel.processEvent(SearchMovieEvent("blade"))
+
+        stateTester.assertValueCount(8)
+        stateTester.assertValueAt(7) {
+            assertThat(it.searchSuggestions.value.isEmpty()).isTrue()
+            true
+        }
+    }
+
+    @Test
+    fun whenMovieTyping_ShowSuggestions() {
+        viewModel.processEvent(MovieTypingEvent("blade"))
+
+        stateTester.assertValueCount(4)
+        stateTester.assertValueAt(3) {
+            assertThat(it.searchSuggestions.value.size).isEqualTo(suggestions.size)
             true
         }
     }
@@ -94,8 +121,8 @@ class HomeViewModelTest {
         isRequestSuccess = false
         viewModel.processEvent(SearchMovieEvent("blade"))
 
-        stateTester.assertValueCount(4)
-        stateTester.assertValueAt(3) {
+        stateTester.assertValueCount(5)
+        stateTester.assertValueAt(4) {
             assertThat(it.searchStatus.value.status).isEqualTo(DataStatus.ERROR)
             assertThat(it.searchResult.value.isEmpty()).isTrue()
             true
@@ -106,8 +133,8 @@ class HomeViewModelTest {
     fun whenSearchMovieSuccess_AnimateSearchButton() {
         whenSearchMovie_AndMovieFound_ShowResults()
 
-        stateTester.assertValueCount(4)
-        stateTester.assertValueAt(3) {
+        stateTester.assertValueCount(5)
+        stateTester.assertValueAt(4) {
             assertThat(it.searchAnimation.value.isAnimated).isTrue()
             true
         }
@@ -120,8 +147,8 @@ class HomeViewModelTest {
 
         viewModel.processEvent(AddMovieToHistoryEvent(0))
 
-        stateTester.assertValueCount(5)
-        stateTester.assertValueAt(4) {
+        stateTester.assertValueCount(6)
+        stateTester.assertValueAt(5) {
             assertThat(it.history.value.size).isEqualTo(1)
             true
         }
@@ -134,7 +161,7 @@ class HomeViewModelTest {
 
         viewModel.processEvent(AddMovieToHistoryEvent(0))
 
-        stateTester.assertValueCount(5)
+        stateTester.assertValueCount(6)
     }
 
     @Test
@@ -142,8 +169,8 @@ class HomeViewModelTest {
         whenSearchMovie_AndMovieFound_ShowResults()
         viewModel.processEvent(LoadMovieDetailsEvent(0))
 
-        effectTester.assertValueCount(5)
-        effectTester.assertValueAt(4) {
+        effectTester.assertValueCount(6)
+        effectTester.assertValueAt(5) {
             assertThat(it::class.java).isAssignableTo(NavigateToDetailsEffect::class.java)
             true
         }
@@ -154,8 +181,8 @@ class HomeViewModelTest {
         whenSearchMovie_AndMovieFound_ShowResults()
         viewModel.processEvent(ViewHistoryEvent)
 
-        effectTester.assertValueCount(5)
-        effectTester.assertValueAt(4) {
+        effectTester.assertValueCount(6)
+        effectTester.assertValueAt(5) {
             assertThat(it::class.java).isAssignableTo(NavigateToHistoryEffect::class.java)
             true
         }

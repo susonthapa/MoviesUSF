@@ -6,4 +6,6 @@
         <attr name="emptyText" format="string"/>
         <attr name="emptyIcon" format="reference"/>
     </declare-styleable>
+
+    <attr name="animDuration" format="integer" />
 </resources>

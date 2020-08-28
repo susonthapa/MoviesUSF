@@ -1,5 +1,6 @@
 package np.com.susonthapa.moviesusf.presentation.home
 
+import android.view.View
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.ObservableTransformer
 import np.com.susonthapa.moviesusf.data.Lce
@@ -14,6 +15,7 @@ import np.com.susonthapa.moviesusf.presentation.home.HomeEvents.*
 import np.com.susonthapa.moviesusf.presentation.home.HomeResults.*
 import np.com.susonthapa.moviesusf.utils.withLatestFrom
 import np.com.susonthapa.moviesusf.utils.withLatestStateBox
+import java.util.concurrent.TimeUnit
 
 /**
  * Created by suson on 8/1/20
@@ -28,6 +30,7 @@ class HomeViewModel @Inject constructor(
                 arrayListOf(
                     o.ofType(ScreenLoadEvent::class.java).map { ScreenLoadResult(it.isRestored) },
                     o.ofType(SearchMovieEvent::class.java).compose(searchMovie()),
+                    o.ofType(MovieTypingEvent::class.java).compose(movieTyping()),
                     o.ofType(AddMovieToHistoryEvent::class.java).compose(addMovieToHistory()),
                     o.ofType(LoadMovieDetailsEvent::class.java).compose(loadMovieDetails()),
                     o.ofType(ViewHistoryEvent::class.java).compose(viewHistory())
@@ -56,6 +59,16 @@ class HomeViewModel @Inject constructor(
                             )
                         )
 
+                    }
+
+                    is LoadSuggestionResult -> {
+                        vs.stateCopy(
+                            searchSuggestions = ViewBox(result.suggestions)
+                        )
+                    }
+
+                    is SuggestionStatusResult -> {
+                        vs.stateCopy(suggestionStatus = ViewBox(result.status))
                     }
 
                     is SearchMovieStatusResult -> {
@@ -103,11 +116,8 @@ class HomeViewModel @Inject constructor(
                 }
                 .switchMap { e ->
                     repo.getMoviesFromServer(e.query)
-                        .withLatestFrom(mState) { response, state ->
-                            Pair(response, state)
-                        }
-                        .flatMap { combinedResult ->
-                            when (val response = combinedResult.first) {
+                        .flatMap {
+                            when (val response = it) {
                                 is Lce.Loading -> {
                                     Observable.just(
                                         SearchMovieStatusResult(ContentStatus.LOADING)
@@ -142,9 +152,64 @@ class HomeViewModel @Inject constructor(
                                 }
                             }
                         }
+                        .startWith(Observable.just(LoadSuggestionResult(listOf())))
                 }
         }
     }
+
+    /**
+     * We use debounce operator for throttling the user input along with switchMap to cancel any
+     * previous pending search result if new query is available
+     */
+    private fun movieTyping(): ObservableTransformer<MovieTypingEvent, out HomeResults> {
+        return ObservableTransformer { observable ->
+            observable
+                .filter {
+                    it.query.isNotEmpty() || it.query.isNotBlank()
+                }
+                .debounce(500, TimeUnit.MILLISECONDS)
+                .switchMap { e ->
+                    repo.getMoviesFromServer(e.query)
+                        .flatMap {
+                            when (val response = it) {
+                                is Lce.Loading -> {
+                                    Observable.just(
+                                        SuggestionStatusResult(ContentStatus.LOADING)
+                                    )
+                                }
+
+                                is Lce.Content -> {
+                                    if (response.packet.isEmpty()) {
+                                        Observable.just(
+                                            SuggestionStatusResult(ContentStatus.EMPTY),
+                                            LoadSuggestionResult(
+                                                listOf()
+                                            )
+                                        )
+                                    } else {
+                                        Observable.just(
+                                            SuggestionStatusResult(ContentStatus.LOADED),
+                                            LoadSuggestionResult(response.packet.map { it.title })
+                                        )
+                                    }
+                                }
+
+                                is Lce.Error -> {
+                                    Observable.just(
+                                        SuggestionStatusResult(
+                                            ContentStatus.error(
+                                                response.throwable?.message
+                                            )
+                                        ),
+                                        LoadSuggestionResult(listOf())
+                                    )
+                                }
+                            }
+                        }
+                }
+        }
+    }
+
 
     private fun addMovieToHistory(): ObservableTransformer<AddMovieToHistoryEvent, out HomeResults> {
         return ObservableTransformer { observable ->

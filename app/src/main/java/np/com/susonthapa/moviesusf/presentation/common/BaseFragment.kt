@@ -56,8 +56,12 @@ abstract class BaseFragment : Fragment() {
         uiDisposable?.dispose()
     }
 
+    protected fun showInputKeyboard() {
+        (activity as BaseFragmentInterface).showInputKeyboard()
+    }
+
     protected fun hideInputKeyboard() {
-        (activity as BaseFragmentInterface).hideInputKeyboard()
+        (activity as BaseFragmentInterface).hideInputKeyboard(view)
     }
 
     protected fun showShortFeedBack(msg: String) {
@@ -68,25 +72,16 @@ abstract class BaseFragment : Fragment() {
         (activity as BaseFragmentInterface).showLongFeedBack(msg)
     }
 
-    protected fun showBottomNavigation() {
-        (activity as BaseFragmentInterface).showBottomNavigation()
-    }
-
-    protected fun hideBottomNavigation() {
-        (activity as BaseFragmentInterface).hideBottomNavigation()
-    }
 }
 
 interface BaseFragmentInterface {
 
-    fun hideInputKeyboard()
+    fun hideInputKeyboard(view: View? = null)
+
+    fun showInputKeyboard()
 
     fun showShortFeedBack(msg: String)
 
     fun showLongFeedBack(msg: String)
-
-    fun showBottomNavigation()
-
-    fun hideBottomNavigation()
 
 }
