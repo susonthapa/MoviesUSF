@@ -17,7 +17,7 @@ import np.com.susonthapa.moviesusf.utils.withLatestFrom
 /**
  * Created by suson on 8/1/20
  */
-class HomeViewModel @Inject constructor(
+class HomeViewModel constructor(
     private val repo: MoviesRepository
 ) : UViewModel<HomeEvents, HomeResults, HomeState, HomeEffects>() {
 

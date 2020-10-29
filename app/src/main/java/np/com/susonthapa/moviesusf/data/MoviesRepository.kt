@@ -9,7 +9,7 @@ import javax.inject.Inject
  * Created by suson on 7/13/20
  */
 
-class MoviesRepository @Inject constructor(
+class MoviesRepository  constructor(
     private val api: ApiService
 ) {
 

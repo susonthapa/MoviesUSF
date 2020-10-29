@@ -82,9 +82,12 @@ dependencies {
     implementation "androidx.navigation:navigation-fragment-ktx:2.3.0"
     implementation "androidx.navigation:navigation-ui-ktx:2.3.0"
 
-    // dagger
-    implementation "com.google.dagger:dagger:2.28"
-    kapt "com.google.dagger:dagger-compiler:2.28"
+    // Koin for Android
+    implementation "org.koin:koin-android:2.1.6"
+    // Koin Android Scope feature
+    implementation "org.koin:koin-android-scope:2.1.6"
+    // Koin Android ViewModel feature
+    implementation "org.koin:koin-android-viewmodel:2.1.6"
 
     // timber for logging
     implementation "com.jakewharton.timber:timber:4.7.1"

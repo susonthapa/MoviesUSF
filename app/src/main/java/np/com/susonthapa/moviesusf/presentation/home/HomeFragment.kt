@@ -3,36 +3,30 @@ package np.com.susonthapa.moviesusf.presentation.home
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.OvershootInterpolator
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.jakewharton.rxbinding4.view.clicks
 import io.reactivex.rxjava3.core.Observable
-import np.com.susonthapa.moviesusf.presentation.usf.UBaseFragment
-import np.com.susonthapa.moviesusf.BaseApplication
 import np.com.susonthapa.moviesusf.databinding.FragmentHomeBinding
-import np.com.susonthapa.moviesusf.di.ViewModelFactory
 import np.com.susonthapa.moviesusf.domain.DataStatus
-import timber.log.Timber
-import javax.inject.Inject
+import np.com.susonthapa.moviesusf.presentation.home.HomeEffects.NavigateToDetailsEffect
 import np.com.susonthapa.moviesusf.presentation.home.HomeEvents.*
-import np.com.susonthapa.moviesusf.presentation.home.HomeEffects.*
+import np.com.susonthapa.moviesusf.presentation.usf.UBaseFragment
+import org.koin.android.viewmodel.ext.android.viewModel
+import timber.log.Timber
 
 class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
 
     private val binding: FragmentHomeBinding
         get() = _binding!! as FragmentHomeBinding
 
-    @Inject
-    lateinit var viewModelFactory: ViewModelFactory
-    private lateinit var viewModel: HomeViewModel
+    private val homeViewModel: HomeViewModel by viewModel()
 
     private lateinit var adapter: SearchResultAdapter
     private lateinit var historyAdapter: HistoryAdapter
@@ -43,7 +37,6 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
     ): View? {
         // Inflate the layout for this fragment
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
-        viewModel = ViewModelProvider(this, viewModelFactory)[HomeViewModel::class.java]
 
         return binding.root
     }
@@ -65,7 +58,7 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
         historyAdapter = HistoryAdapter()
         binding.moviesHistory.adapter = historyAdapter
         binding.moviesHistory.layoutManager = LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
-        initializeReducer(viewModel)
+        initializeReducer(homeViewModel)
     }
 
     override fun render(state: HomeState) {
@@ -155,15 +148,10 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
                 generalEvents
             )
         ).subscribe({
-            viewModel.processEvent(it)
+            homeViewModel.processEvent(it)
         }, {
             Timber.e(it, "error in processing events")
         })
-    }
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        (context.applicationContext as BaseApplication).appComponent.inject(this)
     }
 
 }
