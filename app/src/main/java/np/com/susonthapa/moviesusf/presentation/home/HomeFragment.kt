@@ -9,26 +9,26 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.OvershootInterpolator
+import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.jakewharton.rxbinding4.view.clicks
-import io.reactivex.rxjava3.core.Observable
-import np.com.susonthapa.moviesusf.presentation.usf.UBaseFragment
+import com.airbnb.mvrx.BaseMvRxFragment
+import com.airbnb.mvrx.withState
 import np.com.susonthapa.moviesusf.BaseApplication
 import np.com.susonthapa.moviesusf.databinding.FragmentHomeBinding
 import np.com.susonthapa.moviesusf.di.ViewModelFactory
 import np.com.susonthapa.moviesusf.domain.DataStatus
 import timber.log.Timber
 import javax.inject.Inject
-import np.com.susonthapa.moviesusf.presentation.home.HomeEvents.*
-import np.com.susonthapa.moviesusf.presentation.home.HomeEffects.*
 
-class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
+class HomeFragment : BaseMvRxFragment() {
+
+    private var _binding: FragmentHomeBinding? = null
 
     private val binding: FragmentHomeBinding
-        get() = _binding!! as FragmentHomeBinding
+        get() = _binding!!
 
     @Inject
     lateinit var viewModelFactory: ViewModelFactory
@@ -44,6 +44,7 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
         // Inflate the layout for this fragment
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         viewModel = ViewModelProvider(this, viewModelFactory)[HomeViewModel::class.java]
+        viewModel.subscribe(this, subscriber = {postInvalidate()})
 
         return binding.root
     }
@@ -51,13 +52,12 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         adapter = SearchResultAdapter(object: SearchResultClickListener {
-
             override fun onResultClick(position: Int) {
-                generalEvents.accept(LoadMovieDetailsEvent(position))
+                viewModel.loadMovieDetails(position)
             }
 
             override fun onAddToHistory(position: Int) {
-                generalEvents.accept(AddMovieToHistoryEvent(position))
+                viewModel.addMovieToHistory(position)
             }
 
         })
@@ -65,29 +65,19 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
         historyAdapter = HistoryAdapter()
         binding.moviesHistory.adapter = historyAdapter
         binding.moviesHistory.layoutManager = LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
-        initializeReducer(viewModel)
+        setupObservers()
+        setupEventListeners()
     }
 
-    override fun render(state: HomeState) {
-        Timber.d("------ rendering state: $state")
-        state.searchResult.getValueIfChanged()?.let {
-            Timber.d("------ rendering search results: $it")
-            adapter.submitList(it)
-        }
+    override fun invalidate() {
+        withState(viewModel) {
+            Timber.d("------ rendering state: $it")
+            adapter.submitList(it.searchResult)
+            historyAdapter.submitList(it.history)
+            binding.moviesHistory.isVisible = it.history.isNotEmpty()
+            binding.searchButton.isEnabled = it.searchStatus.status != DataStatus.LOADING
 
-        state.history.getValueIfChanged()?.let {
-            Timber.d("------ rendering history: $it")
-            historyAdapter.submitList(it)
-            if (it.isNotEmpty()) {
-                binding.moviesHistory.visibility = View.VISIBLE
-            } else {
-                binding.moviesHistory.visibility = View.GONE
-            }
-        }
-
-        state.searchStatus.getValueIfChanged()?.let {
-            Timber.d("------ rendering search result status: $it")
-            when (it.status) {
+            when (it.searchStatus.status) {
                 DataStatus.LOADING -> {
                     binding.searchIndicator.visibility = View.VISIBLE
                 }
@@ -104,15 +94,11 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
 
                 DataStatus.ERROR -> {
                     binding.searchIndicator.visibility = View.GONE
-                    binding.searchResultList.showErrorView(it.msg)
+                    binding.searchResultList.showErrorView(it.searchStatus.msg)
                 }
-
             }
-        }
 
-        state.searchAnimation.getValueIfChanged()?.let {
-            Timber.d("------ rendering animation of search: $it")
-            if (it.isAnimated) {
+            if (it.searchAnimation.isAnimated) {
                 val scaleFactor = 0.2f
                 val growX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1f + scaleFactor)
                 val growY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f + scaleFactor)
@@ -131,34 +117,16 @@ class HomeFragment : UBaseFragment<HomeEvents, HomeState, HomeEffects>() {
         }
     }
 
-    override fun trigger(effect: HomeEffects) {
-        Timber.d("------ triggering effect: $effect")
-        when (effect) {
-            is NavigateToDetailsEffect -> {
-                findNavController().navigate(HomeFragmentDirections.actionHomeFragmentToDetailsFragment(effect.movie))
-            }
-        }
+    private fun setupObservers() {
+        viewModel.navigateToMovieDetails.observe(viewLifecycleOwner, {
+            findNavController().navigate(HomeFragmentDirections.actionMHomeFragmentToDetailsFragment(it))
+        })
     }
 
-    override fun onResume() {
-        super.onResume()
-        val screenLoadEvent: Observable<ScreenLoadEvent> = Observable.just(ScreenLoadEvent(isRestoredFromBackStack))
-        val searchMovieEvent: Observable<SearchMovieEvent> = binding.searchButton.clicks()
-            .map {
-                SearchMovieEvent(binding.searchEditText.text.toString())
-            }
-
-        uiDisposable = Observable.merge(
-            arrayListOf(
-                screenLoadEvent,
-                searchMovieEvent,
-                generalEvents
-            )
-        ).subscribe({
-            viewModel.processEvent(it)
-        }, {
-            Timber.e(it, "error in processing events")
-        })
+    private fun setupEventListeners() {
+        binding.searchButton.setOnClickListener {
+            viewModel.searchMovie(binding.searchEditText.text.toString())
+        }
     }
 
     override fun onAttach(context: Context) {

@@ -3,17 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_nav_graph"
-    app:startDestination="@id/homeFragment">
+    app:startDestination="@id/MHomeFragment">
 
-    <fragment
-        android:id="@+id/homeFragment"
-        android:name="np.com.susonthapa.moviesusf.presentation.home.HomeFragment"
-        android:label="fragment_home"
-        tools:layout="@layout/fragment_home" >
-        <action
-            android:id="@+id/action_homeFragment_to_detailsFragment"
-            app:destination="@id/detailsFragment" />
-    </fragment>
     <fragment
         android:id="@+id/detailsFragment"
         android:name="np.com.susonthapa.moviesusf.presentation.details.DetailsFragment"
@@ -22,5 +13,13 @@
         <argument
             android:name="movie"
             app:argType="np.com.susonthapa.moviesusf.domain.Movies" />
+    </fragment>
+    <fragment
+        android:id="@+id/MHomeFragment"
+        android:name="np.com.susonthapa.moviesusf.presentation.home.HomeFragment"
+        android:label="MHomeFragment" >
+        <action
+            android:id="@+id/action_MHomeFragment_to_detailsFragment"
+            app:destination="@id/detailsFragment" />
     </fragment>
 </navigation>

@@ -1,173 +1,93 @@
 package np.com.susonthapa.moviesusf.presentation.home
 
-import io.reactivex.rxjava3.core.Observable
-import io.reactivex.rxjava3.core.ObservableTransformer
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.viewModelScope
+import com.airbnb.mvrx.*
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.launch
 import np.com.susonthapa.moviesusf.data.Lce
 import np.com.susonthapa.moviesusf.data.MoviesRepository
-import np.com.susonthapa.moviesusf.data.ViewBox
-import np.com.susonthapa.moviesusf.data.ViewVisibility
 import np.com.susonthapa.moviesusf.domain.ContentStatus
-import np.com.susonthapa.moviesusf.presentation.usf.UViewModel
+import np.com.susonthapa.moviesusf.domain.Movies
 import javax.inject.Inject
-import np.com.susonthapa.moviesusf.presentation.home.HomeEffects.*
-import np.com.susonthapa.moviesusf.presentation.home.HomeEvents.*
-import np.com.susonthapa.moviesusf.presentation.home.HomeResults.*
-import np.com.susonthapa.moviesusf.utils.withLatestFrom
+import np.com.susonthapa.moviesusf.utils.SingleLiveEvent
+import timber.log.Timber
 
 /**
  * Created by suson on 8/1/20
  */
 class HomeViewModel @Inject constructor(
+    initialState: HomeState = HomeState(),
     private val repo: MoviesRepository
-) : UViewModel<HomeEvents, HomeResults, HomeState, HomeEffects>() {
+) : BaseMvRxViewModel<HomeState>(initialState, debugMode = true) {
 
-    override fun eventToResult(events: Observable<HomeEvents>): Observable<out HomeResults> {
-        return events.publish { o ->
-            Observable.merge(
-                arrayListOf(
-                    o.ofType(ScreenLoadEvent::class.java).map { ScreenLoadResult(it.isRestored) },
-                    o.ofType(SearchMovieEvent::class.java).compose(searchMovie()),
-                    o.ofType(AddMovieToHistoryEvent::class.java).compose(addMovieToHistory()),
-                    o.ofType(LoadMovieDetailsEvent::class.java).compose(loadMovieDetails())
-                )
-            )
-        }
-    }
+    private val _navigateToMovieDetails = SingleLiveEvent<Movies>()
+    val navigateToMovieDetails: LiveData<Movies> = _navigateToMovieDetails
 
-    override fun resultToState(results: Observable<out HomeResults>): Observable<HomeState> {
-        return results
-            .scan(HomeState()) { vs, result ->
-                when (result) {
-                    is ScreenLoadResult -> {
-                        if (result.isRestored) {
-                            // change state when the fragment is restored
-                            vs.resetCopy()
-                        } else {
-                            vs.resetCopy()
-                        }
-                    }
+    fun searchMovie(query: String) {
+        if (query.isNotEmpty() || query.isNotBlank()) {
+            viewModelScope.launch {
+                repo.getMoviesFromServer(query)
+                    .collect { movies ->
+                        Timber.d("------ repoResponse: $movies")
+                        when (movies) {
+                            is Loading -> setState {
+                                copy(searchStatus = ContentStatus.LOADING)
+                            }
 
-                    is SearchMovieResult -> {
-                        vs.stateCopy(
-                            searchResult = ViewBox(result.movies), searchAnimation = ViewBox(
-                                ViewVisibility(true, isAnimated = true)
-                            )
-                        )
-
-                    }
-
-                    is SearchMovieStatusResult -> {
-                        vs.stateCopy(
-                            searchStatus = ViewBox(result.status)
-                        )
-                    }
-
-                    is AddMovieToHistoryResult -> {
-                        vs.stateCopy(history = ViewBox(result.history))
-                    }
-
-                    else -> {
-                        vs
-                    }
-                }
-
-            }
-            .distinctUntilChanged()
-    }
-
-    override fun resultToEffect(results: Observable<out HomeResults>): Observable<HomeEffects> {
-        return results.map { result ->
-            when (result) {
-                is LoadMovieDetailsResult -> {
-                    NavigateToDetailsEffect(result.movie)
-                }
-
-                else -> {
-                    NoEffect
-                }
-            }
-        }
-    }
-
-    private fun searchMovie(): ObservableTransformer<SearchMovieEvent, out HomeResults> {
-        return ObservableTransformer { observable ->
-            observable
-                .filter {
-                    it.query.isNotEmpty() || it.query.isNotBlank()
-                }
-                .switchMap { e ->
-                    repo.getMoviesFromServer(e.query)
-                        .withLatestFrom(mState) { response, state ->
-                            Pair(response, state)
-                        }
-                        .flatMap { combinedResult ->
-                            when (val response = combinedResult.first) {
-                                is Lce.Loading -> {
-                                    Observable.just(
-                                        SearchMovieStatusResult(ContentStatus.LOADING)
-                                    )
-                                }
-
-                                is Lce.Content -> {
-                                    if (response.packet.isEmpty()) {
-                                        Observable.just(
-                                            SearchMovieStatusResult(ContentStatus.EMPTY),
-                                            SearchMovieResult(
-                                                listOf()
-                                            )
+                            is Success -> {
+                                setState {
+                                    if (movies().isEmpty()) {
+                                        copy(
+                                            searchResult = movies(),
+                                            searchStatus = ContentStatus.EMPTY
                                         )
                                     } else {
-                                        Observable.just(
-                                            SearchMovieStatusResult(ContentStatus.LOADED),
-                                            SearchMovieResult(response.packet)
+                                        copy(
+                                            searchResult = movies(),
+                                            searchStatus = ContentStatus.LOADED
                                         )
                                     }
                                 }
+                            }
 
-                                is Lce.Error -> {
-                                    Observable.just(
-                                        SearchMovieStatusResult(
-                                            ContentStatus.error(
-                                                response.throwable?.message
-                                            )
-                                        ),
-                                        SearchMovieResult(listOf())
+                            is Fail -> {
+                                setState {
+                                    copy(
+                                        searchResult = listOf(),
+                                        searchStatus = ContentStatus.error(movies.error.message)
                                     )
                                 }
                             }
+
+                            is Uninitialized -> {}
                         }
-                }
-        }
-    }
-
-    private fun addMovieToHistory(): ObservableTransformer<AddMovieToHistoryEvent, out HomeResults> {
-        return ObservableTransformer { observable ->
-            observable
-                .withLatestFrom(mState) { event, state ->
-                    val currentMovie = state.searchResult?.value[event.position]
-                    val currentHistory = state.history.value
-                    val isMovieInHistory = currentHistory.find {
-                        it.id == currentMovie.id
-                    } != null
-                    if (isMovieInHistory) {
-                        NoResult
-                    } else {
-                        val newHistory = currentHistory.toMutableList()
-                        newHistory.add(currentMovie)
-                        AddMovieToHistoryResult(newHistory)
                     }
-                }
+
+            }
         }
     }
 
-    private fun loadMovieDetails(): ObservableTransformer<LoadMovieDetailsEvent, LoadMovieDetailsResult> {
-        return ObservableTransformer { observable ->
-            observable
-                .withLatestFrom(mState) { event, state ->
-                    val movie = state.searchResult.value[event.position]
-                    LoadMovieDetailsResult(movie)
+    fun addMovieToHistory(position: Int) {
+        withState {
+            val currentMovie = it.searchResult[position]
+            val isMovieInHistory = it.history.find { movie -> movie.id == currentMovie.id } != null
+            if (!isMovieInHistory) {
+                val newHistory = it.history.toMutableList()
+                newHistory.add(currentMovie)
+                setState {
+                    copy(history = newHistory)
                 }
+            }
+
         }
     }
 
+    fun loadMovieDetails(position: Int) {
+        withState {
+            val movie = it.searchResult[position]
+            _navigateToMovieDetails.postValue(movie)
+        }
+    }
 }

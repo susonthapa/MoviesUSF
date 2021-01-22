@@ -1,6 +1,11 @@
 package np.com.susonthapa.moviesusf.data
 
-import io.reactivex.rxjava3.core.Observable
+import com.airbnb.mvrx.Async
+import com.airbnb.mvrx.Fail
+import com.airbnb.mvrx.Loading
+import com.airbnb.mvrx.Success
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
 import np.com.susonthapa.moviesusf.domain.Movies
 import timber.log.Timber
 import javax.inject.Inject
@@ -13,21 +18,23 @@ class MoviesRepository @Inject constructor(
     private val api: ApiService
 ) {
 
-    fun getMoviesFromServer(query: String): Observable<Lce<List<Movies>>> {
-        return api.getMovies(query)
-            .map<Lce<List<Movies>>> {
-                if (it.response == "True") {
-                    val movies = convertSearchResponse(it.search)
-                    Lce.Content(movies)
-                } else {
-                    Lce.Error(Throwable(it.error))
-                }
+    suspend fun getMoviesFromServer(query: String): Flow<Async<List<Movies>>> {
+        return flow {
+            // we are using this builder as flowOf() will suspend and wouldn't immediately return the
+            // loading
+            emit(api.getMovies(query))
+        }.map {
+            if (it.response == "True") {
+                val movies = convertSearchResponse(it.search)
+                Success(movies)
+            } else {
+                Fail(Throwable(it.error))
             }
-            .onErrorReturn {
-                it.printStackTrace()
-                Lce.Error(it)
-            }
-            .startWith(Observable.just(Lce.Loading()))
+        }.catch { e ->
+            e.printStackTrace()
+            emit(Fail(e))
+        }.onStart { emit(Loading()) }
+            .flowOn(Dispatchers.IO)
     }
 
     private fun convertSearchResponse(response: List<SearchResponse.Search>): List<Movies> {
