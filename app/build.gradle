@@ -99,6 +99,7 @@ dependencies {
 
     // mvRx
     implementation "com.airbnb.android:mvrx:1.5.1"
+    implementation "com.airbnb.android:mvrx-testing:1.5.1"
 
     // coroutines
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.2'
@@ -114,5 +115,5 @@ dependencies {
     testImplementation 'junit:junit:4.13.1'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
-
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.4.2'
 }

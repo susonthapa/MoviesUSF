@@ -18,7 +18,7 @@ class MoviesRepository @Inject constructor(
     private val api: ApiService
 ) {
 
-    suspend fun getMoviesFromServer(query: String): Flow<Async<List<Movies>>> {
+    fun getMoviesFromServer(query: String): Flow<Async<List<Movies>>> {
         return flow {
             // we are using this builder as flowOf() will suspend and wouldn't immediately return the
             // loading

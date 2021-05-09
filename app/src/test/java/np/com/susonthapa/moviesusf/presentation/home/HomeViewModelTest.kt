@@ -1,30 +1,36 @@
 package np.com.susonthapa.moviesusf.presentation.home
 
+import com.airbnb.mvrx.Fail
+import com.airbnb.mvrx.Loading
+import com.airbnb.mvrx.Success
+import com.airbnb.mvrx.test.MvRxTestRule
+import com.airbnb.mvrx.withState
 import com.google.common.truth.Truth.assertThat
-import io.reactivex.rxjava3.core.Observable
-import io.reactivex.rxjava3.observers.TestObserver
-import np.com.susonthapa.basetest.RxImmediateSchedulerRule
-import np.com.susonthapa.moviesusf.data.Lce
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.setMain
 import np.com.susonthapa.moviesusf.data.MoviesRepository
 import np.com.susonthapa.moviesusf.domain.ContentStatus
 import np.com.susonthapa.moviesusf.domain.DataStatus
 import np.com.susonthapa.moviesusf.domain.Movies
+import org.junit.After
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Test
 import org.mockito.Mockito.*
-import np.com.susonthapa.moviesusf.presentation.home.HomeEvents.*
-import np.com.susonthapa.moviesusf.presentation.home.HomeEffects.*
 
 
 /**
  * Created by suson on 8/2/20
  */
+@ObsoleteCoroutinesApi
+@ExperimentalCoroutinesApi
 class HomeViewModelTest {
-
+    @ObsoleteCoroutinesApi
+    private val mainThread = newSingleThreadContext("Main Thread")
     private lateinit var viewModel: HomeViewModel
-    private lateinit var stateTester: TestObserver<HomeState>
-    private lateinit var effectTester: TestObserver<HomeEffects>
 
     private lateinit var repo: MoviesRepository
 
@@ -39,77 +45,72 @@ class HomeViewModelTest {
 
     @Before
     fun setup() {
+        Dispatchers.setMain(mainThread)
         // mock the api
         repo = mock(MoviesRepository::class.java).apply {
-            `when`(getMoviesFromServer(anyString())).thenAnswer {
-                if (isRequestSuccess) {
-                    Observable.just(Lce.Loading(), Lce.Content(movies))
-                } else {
-                    Observable.just(Lce.Loading<List<Movies>>(), Lce.Error(Throwable()))
+            runBlockingTest {
+                `when`(getMoviesFromServer(anyString())).thenAnswer {
+                    if (isRequestSuccess) {
+                        flowOf(Loading(), Success(movies))
+                    } else {
+                        flowOf(Loading(), Fail(Throwable()))
+                    }
                 }
             }
         }
 
-        viewModel = HomeViewModel(repo)
-        stateTester = viewModel.state.test()
-        effectTester = viewModel.effect.test()
+        viewModel = HomeViewModel(repo = repo)
+    }
 
-        viewModel.processEvent(ScreenLoadEvent(false))
-        stateTester.assertValueCount(1)
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+        mainThread.close()
     }
 
     @Test
     fun whenSearchMovie_AndMovieFound_ShowResults() {
-        viewModel.processEvent(SearchMovieEvent("blade"))
-
-        stateTester.assertValueCount(4)
-        stateTester.assertValueAt(3) {
-            assertThat(it.searchResult.value.size).isEqualTo(movies.size)
-            true
+        runBlockingTest {
+            viewModel.searchMovie("blade")
+            withState(viewModel) {
+                assertThat(it.searchResult.size).isEqualTo(movies.size)
+            }
         }
     }
 
     @Test
     fun whenSearchMovie_AndQueryEmpty_NoSearch() {
-        viewModel.processEvent(SearchMovieEvent(""))
-
-        stateTester.assertValueCount(1)
+        viewModel.searchMovie("")
+        withState(viewModel) {
+            assertThat(it.searchResult.isEmpty()).isTrue()
+        }
     }
 
     @Test
     fun whenSearchMovie_AndMovieEmpty_ShowEmpty() {
         movies.clear()
-        viewModel.processEvent(SearchMovieEvent("blade"))
-
-        stateTester.assertValueCount(4)
-        stateTester.assertValueAt(3) {
-            assertThat(it.searchStatus.value).isEqualTo(ContentStatus.EMPTY)
-            assertThat(it.searchResult.value.isEmpty()).isTrue()
-            true
+        viewModel.searchMovie("blade")
+        withState(viewModel) {
+            assertThat(it.searchStatus).isEqualTo(ContentStatus.EMPTY)
+            assertThat(it.searchResult.isEmpty()).isTrue()
         }
     }
 
     @Test
     fun whenSearchMovie_AndApiError_ShowError() {
         isRequestSuccess = false
-        viewModel.processEvent(SearchMovieEvent("blade"))
-
-        stateTester.assertValueCount(4)
-        stateTester.assertValueAt(3) {
-            assertThat(it.searchStatus.value.status).isEqualTo(DataStatus.ERROR)
-            assertThat(it.searchResult.value.isEmpty()).isTrue()
-            true
+        viewModel.searchMovie("blade")
+        withState(viewModel) {
+            assertThat(it.searchStatus.status).isEqualTo(DataStatus.ERROR)
+            assertThat(it.searchResult.isEmpty()).isTrue()
         }
     }
 
     @Test
     fun whenSearchMovieSuccess_AnimateSearchButton() {
         whenSearchMovie_AndMovieFound_ShowResults()
-
-        stateTester.assertValueCount(4)
-        stateTester.assertValueAt(3) {
-            assertThat(it.searchAnimation.value.isAnimated).isTrue()
-            true
+        withState(viewModel) {
+            assertThat(it.searchAnimation.isAnimated).isTrue()
         }
     }
 
@@ -117,13 +118,9 @@ class HomeViewModelTest {
     fun whenAddToHistoryClick_UpdateHistory() {
         // first trigger some search
         whenSearchMovie_AndMovieFound_ShowResults()
-
-        viewModel.processEvent(AddMovieToHistoryEvent(0))
-
-        stateTester.assertValueCount(5)
-        stateTester.assertValueAt(4) {
-            assertThat(it.history.value.size).isEqualTo(1)
-            true
+        viewModel.addMovieToHistory(0)
+        withState(viewModel) {
+            assertThat(it.history.size).isEqualTo(1)
         }
     }
 
@@ -131,30 +128,14 @@ class HomeViewModelTest {
     fun whenAddToHistoryClick_AndMovieAlreadyAdded_NoHistoryUpdate() {
         // trigger a add to history
         whenAddToHistoryClick_UpdateHistory()
-
-        viewModel.processEvent(AddMovieToHistoryEvent(0))
-
-        stateTester.assertValueCount(5)
-    }
-
-    @Test
-    fun whenMovieClick_LoadMovieDetails() {
-        whenSearchMovie_AndMovieFound_ShowResults()
-        viewModel.processEvent(LoadMovieDetailsEvent(0))
-
-        effectTester.assertValueCount(5)
-        effectTester.assertValueAt(4) {
-            assertThat(it::class.java).isAssignableTo(NavigateToDetailsEffect::class.java)
-            true
+        viewModel.addMovieToHistory(0)
+        withState(viewModel) {
+            assertThat(it.history.size).isEqualTo(1)
         }
     }
-
-
-
-    // setup the default schedulers
     companion object {
-        @ClassRule
         @JvmField
-        val schedulers = RxImmediateSchedulerRule()
+        @ClassRule
+        val mvrxTestRule = MvRxTestRule()
     }
 }
