@@ -1,6 +1,7 @@
 package np.com.susonthapa.moviesusf
 
 import android.app.Application
+import com.airbnb.mvrx.Mavericks
 import com.facebook.drawee.backends.pipeline.Fresco
 import np.com.susonthapa.moviesusf.di.ApplicationModule
 import np.com.susonthapa.moviesusf.di.DaggerApplicationComponent
@@ -19,6 +20,7 @@ class BaseApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         Fresco.initialize(this)
+        Mavericks.initialize(this)
         if (BuildConfig.DEBUG) {
             Timber.plant(CustomDebugTree())
         } else {

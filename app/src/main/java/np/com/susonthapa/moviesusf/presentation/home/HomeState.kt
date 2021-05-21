@@ -1,5 +1,6 @@
 package np.com.susonthapa.moviesusf.presentation.home
 
+import com.airbnb.mvrx.MavericksState
 import np.com.susonthapa.moviesusf.data.Lce
 import np.com.susonthapa.moviesusf.data.ViewBox
 import np.com.susonthapa.moviesusf.data.ViewVisibility
@@ -19,46 +20,39 @@ import np.com.susonthapa.moviesusf.presentation.usf.State
  * State to represent the Home screen
  */
 data class HomeState(
-    val searchResult: ViewBox<List<Movies>> = ViewBox(listOf()),
-    val searchStatus: ViewBox<ContentStatus> = ViewBox(ContentStatus.LOADED),
-    val history: ViewBox<List<Movies>> = ViewBox(listOf()),
-    val searchAnimation: ViewBox<ViewVisibility> = ViewBox(ViewVisibility())
-) : State {
+    val searchResult: List<Movies> = listOf(),
+    val searchStatus: ContentStatus = ContentStatus.LOADED,
+    val history: List<Movies> = listOf(),
+    val searchAnimation: ViewVisibility = ViewVisibility(),
+    val oldState: HomeState? = null
+) : MavericksState {
 
-    fun stateCopy(
-        searchResult: ViewBox<List<Movies>> = this.searchResult.stateCopy(),
-        searchStatus: ViewBox<ContentStatus> = this.searchStatus.stateCopy(),
-        history: ViewBox<List<Movies>> = this.history.stateCopy(),
-        searchAnimation: ViewBox<ViewVisibility> = this.searchAnimation.stateCopy()
-    ) = HomeState(searchResult, searchStatus, history, searchAnimation)
 
-    fun resetCopy(
-        searchResult: ViewBox<List<Movies>> = this.searchResult.resetCopy(),
-        searchStatus: ViewBox<ContentStatus> = this.searchStatus.resetCopy(),
-        history: ViewBox<List<Movies>> = this.history.resetCopy(),
-        searchAnimation: ViewBox<ViewVisibility> = this.searchAnimation.resetCopy()
-    ) = HomeState(searchResult, searchStatus, history, searchAnimation)
+    val dSearchResult: List<Movies>?
+        get() = if (searchResult == oldState?.searchResult) null else searchResult
 
-}
+    val dSearchStatus: ContentStatus?
+        get() = if (searchStatus == oldState?.searchStatus) null else searchStatus
 
-sealed class HomeEvents : Event {
-    data class ScreenLoadEvent(val isRestored: Boolean) : HomeEvents()
-    data class SearchMovieEvent(val query: String) : HomeEvents()
-    data class AddMovieToHistoryEvent(val position: Int) : HomeEvents()
-    data class LoadMovieDetailsEvent(val position: Int) : HomeEvents()
-}
+    val dSearchAnimation: ViewVisibility?
+        get() = if (searchAnimation == oldState?.searchAnimation) null else searchAnimation
 
-sealed class HomeEffects : Effect {
-    data class ShowMessageEffect(val message: String) : HomeEffects()
-    data class NavigateToDetailsEffect(val movie: Movies) : HomeEffects()
-    object NoEffect : HomeEffects()
-}
+    val dHistory: List<Movies>?
+        get() = if (history == oldState?.history)  null else history
 
-sealed class HomeResults : Result {
-    data class ScreenLoadResult(val isRestored: Boolean) : HomeResults()
-    data class SearchMovieResult(val movies: List<Movies>) : HomeResults()
-    data class SearchMovieStatusResult(val status: ContentStatus) : HomeResults()
-    data class AddMovieToHistoryResult(val history: List<Movies>) : HomeResults()
-    data class LoadMovieDetailsResult(val movie: Movies) : HomeResults()
-    object NoResult : HomeResults()
+    fun diffCopy(
+        searchResult: List<Movies> = this.searchResult,
+        searchStatus: ContentStatus = this.searchStatus,
+        history: List<Movies> = this.history,
+        searchAnimation: ViewVisibility = this.searchAnimation,
+        oldState: HomeState? = this
+    ): HomeState {
+        return HomeState(
+            searchResult,
+            searchStatus,
+            history,
+            searchAnimation,
+            oldState?.copy(oldState = null)
+        )
+    }
 }

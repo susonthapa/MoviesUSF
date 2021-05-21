@@ -1,7 +1,7 @@
 package np.com.susonthapa.moviesusf.domain
 
 import android.os.Parcelable
-import kotlinx.android.parcel.Parcelize
+import kotlinx.parcelize.Parcelize
 
 /**
  * Created by suson on 8/1/20
