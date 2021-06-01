@@ -1,15 +1,9 @@
 package np.com.susonthapa.moviesusf.presentation.home
 
 import com.airbnb.mvrx.MavericksState
-import np.com.susonthapa.moviesusf.data.Lce
-import np.com.susonthapa.moviesusf.data.ViewBox
 import np.com.susonthapa.moviesusf.data.ViewVisibility
 import np.com.susonthapa.moviesusf.domain.ContentStatus
 import np.com.susonthapa.moviesusf.domain.Movies
-import np.com.susonthapa.moviesusf.presentation.usf.Effect
-import np.com.susonthapa.moviesusf.presentation.usf.Event
-import np.com.susonthapa.moviesusf.presentation.usf.Result
-import np.com.susonthapa.moviesusf.presentation.usf.State
 
 /**
  * Created by suson on 8/1/20

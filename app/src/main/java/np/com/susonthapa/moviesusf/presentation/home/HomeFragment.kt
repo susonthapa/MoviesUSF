@@ -5,30 +5,22 @@ import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder
 import android.content.Context
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.OvershootInterpolator
 import androidx.core.view.isVisible
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.mvrx.MavericksView
 import com.airbnb.mvrx.fragmentViewModel
 import com.airbnb.mvrx.withState
-import com.jakewharton.rxbinding4.view.clicks
-import io.reactivex.rxjava3.core.Observable
 import np.com.susonthapa.core.ui.common.BaseFragment
-import np.com.susonthapa.moviesusf.presentation.usf.UBaseFragment
 import np.com.susonthapa.moviesusf.BaseApplication
 import np.com.susonthapa.moviesusf.databinding.FragmentHomeBinding
-import np.com.susonthapa.moviesusf.di.ViewModelFactory
 import np.com.susonthapa.moviesusf.domain.DataStatus
 import timber.log.Timber
-import javax.inject.Inject
 
 class HomeFragment : BaseFragment(), MavericksView {
 

@@ -6,15 +6,15 @@ import com.airbnb.mvrx.MavericksViewModelFactory
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.schedulers.Schedulers
-import np.com.susonthapa.moviesusf.utils.SingleLiveEvent
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import np.com.susonthapa.moviesusf.data.Lce
 import np.com.susonthapa.moviesusf.data.MoviesRepository
 import np.com.susonthapa.moviesusf.data.ViewVisibility
 import np.com.susonthapa.moviesusf.domain.ContentStatus
 import np.com.susonthapa.moviesusf.domain.Movies
+import np.com.susonthapa.moviesusf.utils.SingleLiveEvent
+import timber.log.Timber
 
 /**
  * Created by suson on 8/1/20
@@ -23,8 +23,6 @@ class HomeViewModel @AssistedInject constructor(
     @Assisted initialState: HomeState,
     private val repo: MoviesRepository
 ) : MavericksViewModel<HomeState>(initialState) {
-
-    private val bag = CompositeDisposable()
 
     private val _navigateToDetails: SingleLiveEvent<Movies> = SingleLiveEvent()
     val navigateToDetails: MutableLiveData<Movies> = _navigateToDetails
@@ -43,11 +41,10 @@ class HomeViewModel @AssistedInject constructor(
     }
 
     fun searchMovie(query: String) {
-        bag.add(
+        viewModelScope.launch {
             repo.getMoviesFromServer(query)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({
+                .collect {
+                    Timber.d("flow emission from repo: $it")
                     when (it) {
                         is Lce.Loading -> {
                             setState { diffCopy(searchStatus = ContentStatus.LOADING) }
@@ -80,10 +77,8 @@ class HomeViewModel @AssistedInject constructor(
                             }
                         }
                     }
-                }, {
-                    it.printStackTrace()
-                })
-        )
+                }
+        }
     }
 
     fun addMovieToHistory(position: Int) {
@@ -107,11 +102,6 @@ class HomeViewModel @AssistedInject constructor(
             val movie = it.searchResult[position]
             _navigateToDetails.postValue(movie)
         }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        bag.clear()
     }
 
     @AssistedFactory

@@ -1,8 +1,8 @@
 package np.com.susonthapa.moviesusf.data
 
-import io.reactivex.rxjava3.core.Observable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
 import np.com.susonthapa.moviesusf.domain.Movies
-import timber.log.Timber
 import javax.inject.Inject
 
 /**
@@ -13,21 +13,20 @@ class MoviesRepository @Inject constructor(
     private val api: ApiService
 ) {
 
-    fun getMoviesFromServer(query: String): Observable<Lce<List<Movies>>> {
-        return api.getMovies(query)
-            .map<Lce<List<Movies>>> {
-                if (it.response == "True") {
-                    val movies = convertSearchResponse(it.search)
-                    Lce.Content(movies)
-                } else {
-                    Lce.Error(Throwable(it.error))
-                }
+    fun getMoviesFromServer(query: String): Flow<Lce<List<Movies>>> {
+        return flow<Lce<List<Movies>>> {
+            val response = api.getMovies(query)
+            if (response.response == "True") {
+                val movies = convertSearchResponse(response.search)
+                emit(Lce.Content(movies))
+            } else {
+                Lce.Error<List<Movies>>(Throwable(response.error))
             }
-            .onErrorReturn {
-                it.printStackTrace()
-                Lce.Error(it)
-            }
-            .startWith(Observable.just(Lce.Loading()))
+        }.catch { e ->
+            e.printStackTrace()
+            emit(Lce.Error(e))
+        }.onStart { emit(Lce.Loading()) }
+            .flowOn(Dispatchers.IO)
     }
 
     private fun convertSearchResponse(response: List<SearchResponse.Search>): List<Movies> {

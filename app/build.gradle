@@ -72,8 +72,8 @@ task jacocoTestReport(type: JacocoReport, dependsOn: ["testDebugUnitTest"]) {
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation 'androidx.core:core-ktx:1.3.2'
-    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'androidx.core:core-ktx:1.5.0'
+    implementation 'androidx.appcompat:appcompat:1.3.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
 
     implementation "com.google.android.material:material:1.3.0"
@@ -92,20 +92,8 @@ dependencies {
     // fresco image viewer
     implementation "com.facebook.fresco:fresco:2.2.0"
 
-    // rxjava
-    implementation "io.reactivex.rxjava3:rxjava:3.0.6"
-    implementation "io.reactivex.rxjava3:rxandroid:3.0.0"
-
-    // rx-relay
-    implementation "com.jakewharton.rxrelay3:rxrelay:3.0.0"
-
-    // rx binding
-    implementation "com.jakewharton.rxbinding4:rxbinding:4.0.0"
-    implementation "com.jakewharton.rxbinding4:rxbinding-material:4.0.0"
-
     // retrofit
     implementation "com.squareup.retrofit2:retrofit:2.9.0"
-    implementation "com.squareup.retrofit2:adapter-rxjava3:2.9.0"
     implementation "com.squareup.okhttp3:okhttp:4.7.2"
     implementation "com.squareup.okhttp3:logging-interceptor:4.7.2"
 
@@ -116,7 +104,7 @@ dependencies {
     implementation "com.squareup.moshi:moshi:1.12.0"
     implementation "com.squareup.retrofit2:converter-moshi:2.9.0"
     kapt "com.squareup.moshi:moshi-kotlin-codegen:1.12.0"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.8"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.2"
 
     // testing
     testImplementation "org.mockito:mockito-core:3.4.4"

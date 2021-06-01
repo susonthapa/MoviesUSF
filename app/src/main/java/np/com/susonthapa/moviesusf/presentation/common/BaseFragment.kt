@@ -1,22 +1,13 @@
 package np.com.susonthapa.core.ui.common
 
 import android.os.Bundle
-import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
-import androidx.navigation.ui.NavigationUI
 import androidx.viewbinding.ViewBinding
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.disposables.Disposable
 import timber.log.Timber
 
 abstract class BaseFragment : Fragment() {
 
     protected var _binding: ViewBinding? = null
-
-    protected val bag = CompositeDisposable()
-
-    protected var uiDisposable: Disposable? = null
 
     protected var isRestoredFromBackStack = false
 
@@ -34,14 +25,8 @@ abstract class BaseFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         Timber.v("Fragment onDestroyView ${this.javaClass.simpleName}")
-        bag.clear()
         _binding = null
         isRestoredFromBackStack = true
-    }
-
-    override fun onPause() {
-        super.onPause()
-        uiDisposable?.dispose()
     }
 
     protected fun hideInputKeyboard() {
