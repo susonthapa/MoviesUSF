@@ -2,7 +2,7 @@ package np.com.susonthapa.moviesusf.data
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
-import np.com.susonthapa.moviesusf.domain.Movies
+import np.com.susonthapa.moviesusf.domain.Movie
 import javax.inject.Inject
 
 /**
@@ -13,14 +13,14 @@ class MoviesRepository @Inject constructor(
     private val api: ApiService
 ) {
 
-    fun getMoviesFromServer(query: String): Flow<Lce<List<Movies>>> {
-        return flow<Lce<List<Movies>>> {
+    fun getMoviesFromServer(query: String): Flow<Lce<List<Movie>>> {
+        return flow<Lce<List<Movie>>> {
             val response = api.getMovies(query)
             if (response.response == "True") {
                 val movies = convertSearchResponse(response.search)
                 emit(Lce.Content(movies))
             } else {
-                Lce.Error<List<Movies>>(Throwable(response.error))
+                Lce.Error<List<Movie>>(Throwable(response.error))
             }
         }.catch { e ->
             e.printStackTrace()
@@ -29,9 +29,9 @@ class MoviesRepository @Inject constructor(
             .flowOn(Dispatchers.IO)
     }
 
-    private fun convertSearchResponse(response: List<SearchResponse.Search>): List<Movies> {
+    private fun convertSearchResponse(response: List<SearchResponse.Search>): List<Movie> {
         return response.map {
-            Movies(it.id, it.title, it.year, it.type, it.image)
+            Movie(it.id, it.title, it.year, it.type, it.image)
         }
     }
 

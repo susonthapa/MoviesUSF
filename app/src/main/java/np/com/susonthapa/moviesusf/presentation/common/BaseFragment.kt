@@ -1,4 +1,4 @@
-package np.com.susonthapa.core.ui.common
+package np.com.susonthapa.moviesusf.presentation.common
 
 import android.os.Bundle
 import androidx.fragment.app.Fragment

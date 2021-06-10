@@ -12,7 +12,7 @@ import np.com.susonthapa.moviesusf.data.Lce
 import np.com.susonthapa.moviesusf.data.MoviesRepository
 import np.com.susonthapa.moviesusf.data.ViewVisibility
 import np.com.susonthapa.moviesusf.domain.ContentStatus
-import np.com.susonthapa.moviesusf.domain.Movies
+import np.com.susonthapa.moviesusf.domain.Movie
 import np.com.susonthapa.moviesusf.utils.SingleLiveEvent
 import timber.log.Timber
 
@@ -24,8 +24,8 @@ class HomeViewModel @AssistedInject constructor(
     private val repo: MoviesRepository
 ) : MavericksViewModel<HomeState>(initialState) {
 
-    private val _navigateToDetails: SingleLiveEvent<Movies> = SingleLiveEvent()
-    val navigateToDetails: MutableLiveData<Movies> = _navigateToDetails
+    private val _navigateToDetails: SingleLiveEvent<Movie> = SingleLiveEvent()
+    val navigateToDetails: MutableLiveData<Movie> = _navigateToDetails
 
 
     fun screenLoad(isRestored: Boolean) {

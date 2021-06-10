@@ -8,7 +8,7 @@ import np.com.susonthapa.moviesusf.data.Lce
 import np.com.susonthapa.moviesusf.data.MoviesRepository
 import np.com.susonthapa.moviesusf.domain.ContentStatus
 import np.com.susonthapa.moviesusf.domain.DataStatus
-import np.com.susonthapa.moviesusf.domain.Movies
+import np.com.susonthapa.moviesusf.domain.Movie
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Test
@@ -31,10 +31,10 @@ class HomeViewModelTest {
     private var isRequestSuccess = true
 
     private val movies = listOf(
-        Movies("221", "blade", "2019", "action", "image.png"),
-        Movies("222", "blade", "2019", "action", "image.png"),
-        Movies("223", "blade", "2019", "action", "image.png"),
-        Movies("224", "blade", "2019", "action", "image.png")
+        Movie("221", "blade", "2019", "action", "image.png"),
+        Movie("222", "blade", "2019", "action", "image.png"),
+        Movie("223", "blade", "2019", "action", "image.png"),
+        Movie("224", "blade", "2019", "action", "image.png")
     ).toMutableList()
 
     @Before
@@ -45,7 +45,7 @@ class HomeViewModelTest {
                 if (isRequestSuccess) {
                     Observable.just(Lce.Loading(), Lce.Content(movies))
                 } else {
-                    Observable.just(Lce.Loading<List<Movies>>(), Lce.Error(Throwable()))
+                    Observable.just(Lce.Loading<List<Movie>>(), Lce.Error(Throwable()))
                 }
             }
         }

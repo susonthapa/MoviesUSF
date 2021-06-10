@@ -3,7 +3,7 @@ package np.com.susonthapa.moviesusf.presentation.home
 import com.airbnb.mvrx.MavericksState
 import np.com.susonthapa.moviesusf.data.ViewVisibility
 import np.com.susonthapa.moviesusf.domain.ContentStatus
-import np.com.susonthapa.moviesusf.domain.Movies
+import np.com.susonthapa.moviesusf.domain.Movie
 
 /**
  * Created by suson on 8/1/20
@@ -14,15 +14,15 @@ import np.com.susonthapa.moviesusf.domain.Movies
  * State to represent the Home screen
  */
 data class HomeState(
-    val searchResult: List<Movies> = listOf(),
+    val searchResult: List<Movie> = listOf(),
     val searchStatus: ContentStatus = ContentStatus.LOADED,
-    val history: List<Movies> = listOf(),
+    val history: List<Movie> = listOf(),
     val searchAnimation: ViewVisibility = ViewVisibility(),
     val oldState: HomeState? = null
 ) : MavericksState {
 
 
-    val dSearchResult: List<Movies>?
+    val dSearchResult: List<Movie>?
         get() = if (searchResult == oldState?.searchResult) null else searchResult
 
     val dSearchStatus: ContentStatus?
@@ -31,13 +31,13 @@ data class HomeState(
     val dSearchAnimation: ViewVisibility?
         get() = if (searchAnimation == oldState?.searchAnimation) null else searchAnimation
 
-    val dHistory: List<Movies>?
+    val dHistory: List<Movie>?
         get() = if (history == oldState?.history)  null else history
 
     fun diffCopy(
-        searchResult: List<Movies> = this.searchResult,
+        searchResult: List<Movie> = this.searchResult,
         searchStatus: ContentStatus = this.searchStatus,
-        history: List<Movies> = this.history,
+        history: List<Movie> = this.history,
         searchAnimation: ViewVisibility = this.searchAnimation,
         oldState: HomeState? = this
     ): HomeState {

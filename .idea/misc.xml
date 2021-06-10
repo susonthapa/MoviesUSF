@@ -1,5 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="../../../../layout/compose-model-1623032438261.xml" value="0.33" />
+        <entry key="../../../../layout/compose-model-1623110877332.xml" value="0.2953451043338684" />
+        <entry key="../../../../layout/compose-model-1623111588934.xml" value="0.75" />
+        <entry key="../../../../layout/compose-model-1623249666517.xml" value="0.4331959976456739" />
+        <entry key="../../../../layout/compose-model-1623250008990.xml" value="0.25" />
+        <entry key="../../../../layout/compose-model-1623282105415.xml" value="0.3112331081081081" />
+        <entry key="../../../../layout/compose-model-1623282215525.xml" value="0.4331959976456739" />
+        <entry key="../../../../layout/custom_preview.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/background_circle.xml" value="0.3723958333333333" />
+        <entry key="app/src/main/res/layout/activity_main.xml" value="0.35625" />
+        <entry key="app/src/main/res/layout/fragment_details.xml" value="0.35625" />
+        <entry key="app/src/main/res/layout/fragment_home.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/history_item_layout.xml" value="0.35625" />
+        <entry key="app/src/main/res/layout/movies_item_layout.xml" value="0.35625" />
+        <entry key="app/src/main/res/layout/recycler_empty_layout.xml" value="0.35625" />
+        <entry key="app/src/main/res/layout/recycler_error_layout.xml" value="0.35625" />
+      </map>
+    </option>
+  </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>

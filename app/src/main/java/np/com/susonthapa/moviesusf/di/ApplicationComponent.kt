@@ -3,9 +3,6 @@ package np.com.susonthapa.moviesusf.di
 import com.airbnb.mvrx.MavericksViewModel
 import dagger.Component
 import np.com.susonthapa.moviesusf.presentation.home.AssistedViewModelFactory
-import np.com.susonthapa.moviesusf.presentation.MainActivity
-import np.com.susonthapa.moviesusf.presentation.details.DetailsFragment
-import np.com.susonthapa.moviesusf.presentation.home.HomeFragment
 import javax.inject.Singleton
 
 /**
