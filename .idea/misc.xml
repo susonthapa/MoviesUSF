@@ -12,6 +12,11 @@
         <entry key="../../../../layout/compose-model-1623282215525.xml" value="0.4331959976456739" />
         <entry key="../../../../layout/custom_preview.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/background_circle.xml" value="0.3723958333333333" />
+        <entry key="app/src/main/res/drawable/ic_add_circle.xml" value="0.2375" />
+        <entry key="app/src/main/res/drawable/ic_empty.xml" value="0.2375" />
+        <entry key="app/src/main/res/drawable/ic_error.xml" value="0.2375" />
+        <entry key="app/src/main/res/drawable/ic_launcher_background.xml" value="0.2375" />
+        <entry key="app/src/main/res/drawable/ic_search_24.xml" value="0.2375" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.35625" />
         <entry key="app/src/main/res/layout/fragment_details.xml" value="0.35625" />
         <entry key="app/src/main/res/layout/fragment_home.xml" value="0.33" />

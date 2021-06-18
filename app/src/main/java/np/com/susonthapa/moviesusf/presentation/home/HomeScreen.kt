@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -35,7 +36,10 @@ fun ComposeHomeScreen(navigateToDetails: (Movie) -> Unit) {
     val searchStatus by viewModel.collectAsState(HomeState::searchStatus)
     val historyList by viewModel.collectAsState(HomeState::history)
 
-    viewModel.navigateToDetails.observe(o)
+    val navigateEvent = viewModel.navigateToDetails.observeAsState()
+    if (navigateEvent.value != null) {
+        navigateToDetails(navigateEvent.value!!)
+    }
 
     Surface(modifier = Modifier.fillMaxSize()) {
         val searchState = remember { mutableStateOf("") }
@@ -52,7 +56,7 @@ fun ComposeHomeScreen(navigateToDetails: (Movie) -> Unit) {
                 searchList = searchList,
                 searchStatus = searchStatus,
                 modifier = Modifier.weight(1f),
-                navigateToDetails = navigateToDetails
+                navigateToDetails = { viewModel.loadMovieDetails(it) }
             ) { viewModel.addMovieToHistory(it) }
             HistoryList(movies = historyList)
         }
@@ -64,7 +68,7 @@ private fun SearchListWithStatus(
     searchList: List<Movie>,
     searchStatus: ContentStatus,
     modifier: Modifier,
-    navigateToDetails: (Movie) -> Unit = {},
+    navigateToDetails: (Int) -> Unit = {},
     addToHistory: (Int) -> Unit = {}
 ) {
     when (searchStatus.status) {
@@ -196,14 +200,14 @@ private fun SearchResultListLayout(
     movies: List<Movie>,
     modifier: Modifier,
     addToHistory: (Int) -> Unit,
-    onItemClick: (Movie) -> Unit
+    onItemClick: (Int) -> Unit
 ) {
     LazyColumn(modifier = modifier) {
         itemsIndexed(items = movies) { index, movie ->
             SearchResultListItem(
                 movie = movie,
                 addToHistory = { addToHistory(index) },
-                onItemClick = onItemClick
+                onItemClick = { onItemClick(index) }
             )
         }
     }
@@ -213,13 +217,13 @@ private fun SearchResultListLayout(
 private fun SearchResultListItem(
     movie: Movie,
     addToHistory: () -> Unit,
-    onItemClick: (Movie) -> Unit
+    onItemClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clickable { onItemClick(movie) }
+            .clickable { onItemClick() }
     ) {
         Image(
             painter = rememberGlidePainter(

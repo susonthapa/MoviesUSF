@@ -12,12 +12,15 @@ import np.com.susonthapa.moviesusf.domain.Movie
 import np.com.susonthapa.moviesusf.presentation.details.DetailScreen
 import np.com.susonthapa.moviesusf.presentation.home.ComposeHomeScreen
 import np.com.susonthapa.moviesusf.presentation.navigator.Screen
+import np.com.susonthapa.moviesusf.presentation.theme.MoviesUSFTheme
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MoviesUSFApp()
+            MoviesUSFTheme {
+                MoviesUSFApp()
+            }
         }
     }
 }

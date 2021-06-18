@@ -12,9 +12,5 @@ import javax.inject.Singleton
 @Singleton
 @Component(modules = [NetworkModule::class, ViewModelModule::class, ApplicationModule::class, HomeModule::class])
 interface ApplicationComponent {
-    fun inject(activity: MainActivity)
-    fun inject(fragment: HomeFragment)
-    fun inject(fragment: DetailsFragment)
-
     fun viewModelFactories(): Map<Class<out MavericksViewModel<*>>, AssistedViewModelFactory<*, *>>
 }
