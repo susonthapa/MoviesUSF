@@ -32,9 +32,9 @@ class HomeViewModel @AssistedInject constructor(
         withState {
             setState {
                 if (isRestored) {
-                    diffCopy(oldState = null)
+                    copy()
                 } else {
-                    diffCopy(searchAnimation = ViewVisibility(true, isAnimated = true))
+                    copy(searchAnimation = ViewVisibility(true, isAnimated = true))
                 }
             }
         }
@@ -47,20 +47,20 @@ class HomeViewModel @AssistedInject constructor(
                     Timber.d("flow emission from repo: $it")
                     when (it) {
                         is Lce.Loading -> {
-                            setState { diffCopy(searchStatus = ContentStatus.LOADING) }
+                            setState { copy(searchStatus = ContentStatus.LOADING) }
                         }
 
                         is Lce.Content -> {
                             if (it.packet.isEmpty()) {
                                 setState {
-                                    diffCopy(
+                                    copy(
                                         searchResult = listOf(),
                                         searchStatus = ContentStatus.EMPTY
                                     )
                                 }
                             } else {
                                 setState {
-                                    diffCopy(
+                                    copy(
                                         searchResult = it.packet,
                                         searchStatus = ContentStatus.LOADED
                                     )
@@ -70,7 +70,7 @@ class HomeViewModel @AssistedInject constructor(
 
                         is Lce.Error -> {
                             setState {
-                                diffCopy(
+                                copy(
                                     searchResult = listOf(),
                                     searchStatus = ContentStatus.error(it.throwable?.message)
                                 )
@@ -90,7 +90,7 @@ class HomeViewModel @AssistedInject constructor(
                 val newHistory = currentHistory.toMutableList()
                 newHistory.add(currentMovie)
                 setState {
-                    diffCopy(history = newHistory)
+                    copy(history = newHistory)
                 }
             }
 

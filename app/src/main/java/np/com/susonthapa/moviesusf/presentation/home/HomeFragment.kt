@@ -32,6 +32,74 @@ class HomeFragment : BaseFragment(), MavericksView {
     private lateinit var adapter: SearchResultAdapter
     private lateinit var historyAdapter: HistoryAdapter
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // render the views
+        viewModel.apply {
+            onEach(HomeState::searchStatus) {
+                Timber.d("------ rendering contentStatus: $it")
+                when (it.status) {
+                    DataStatus.LOADING -> {
+                        binding.searchIndicator.isVisible = true
+                    }
+
+                    DataStatus.LOADED -> {
+                        binding.searchIndicator.isVisible = false
+                        binding.searchResultList.hideAllViews()
+                    }
+
+                    DataStatus.EMPTY -> {
+                        binding.searchIndicator.isVisible = false
+                        binding.searchResultList.showEmptyView()
+                    }
+
+                    DataStatus.ERROR -> {
+                        binding.searchIndicator.isVisible = false
+                        binding.searchResultList.showErrorView()
+                    }
+                }
+            }
+
+            onEach(HomeState::searchResult) {
+                Timber.d("------ rendering searchResult: $it")
+                adapter.submitList(it)
+            }
+
+            onEach(HomeState::history) {
+                Timber.d("------ rendering history: $it")
+                historyAdapter.submitList(it)
+                binding.moviesHistory.isVisible = it.isNotEmpty()
+            }
+
+            onEach(HomeState::searchAnimation) {
+                Timber.d("------ rendering animation of search: $it")
+                if (it.isAnimated) {
+                    val scaleFactor = 0.2f
+                    val growX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1f + scaleFactor)
+                    val growY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f + scaleFactor)
+                    val growAnimation =
+                        ObjectAnimator.ofPropertyValuesHolder(binding.searchButton, growX, growY)
+                    growAnimation.interpolator = OvershootInterpolator()
+
+                    val shrinkX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1f)
+                    val shrinkY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f)
+                    val shrinkAnimation =
+                        ObjectAnimator.ofPropertyValuesHolder(
+                            binding.searchButton,
+                            shrinkX,
+                            shrinkY
+                        )
+                    shrinkAnimation.interpolator = OvershootInterpolator()
+
+                    val animSet = AnimatorSet()
+                    animSet.playSequentially(growAnimation, shrinkAnimation)
+                    animSet.start()
+                }
+            }
+        }
+
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -80,67 +148,6 @@ class HomeFragment : BaseFragment(), MavericksView {
         (context.applicationContext as BaseApplication).appComponent.inject(this)
     }
 
-    override fun invalidate() = withState(viewModel) { state ->
-        Timber.d("state: $state")
-
-        state.dSearchStatus?.let {
-            Timber.d("------ rendering contentStatus: $it")
-            when (it.status) {
-                DataStatus.LOADING -> {
-                    binding.searchIndicator.isVisible = true
-                }
-
-                DataStatus.LOADED -> {
-                    binding.searchIndicator.isVisible = false
-                    binding.searchResultList.hideAllViews()
-                }
-
-                DataStatus.EMPTY -> {
-                    binding.searchIndicator.isVisible = false
-                    binding.searchResultList.showEmptyView()
-                }
-
-                DataStatus.ERROR -> {
-                    binding.searchIndicator.isVisible = false
-                    binding.searchResultList.showErrorView()
-                }
-            }
-        }
-
-        state.dSearchResult?.let {
-            Timber.d("------ rendering searchResult: $it")
-            adapter.submitList(state.searchResult)
-        }
-
-        state.dHistory?.let {
-            Timber.d("------ rendering history: $it")
-            historyAdapter.submitList(it)
-            binding.moviesHistory.isVisible = it.isNotEmpty()
-        }
-
-        state.dSearchAnimation?.let {
-            Timber.d("------ rendering animation of search: $it")
-            if (it.isAnimated) {
-                val scaleFactor = 0.2f
-                val growX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1f + scaleFactor)
-                val growY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f + scaleFactor)
-                val growAnimation =
-                    ObjectAnimator.ofPropertyValuesHolder(binding.searchButton, growX, growY)
-                growAnimation.interpolator = OvershootInterpolator()
-
-                val shrinkX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1f)
-                val shrinkY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f)
-                val shrinkAnimation =
-                    ObjectAnimator.ofPropertyValuesHolder(binding.searchButton, shrinkX, shrinkY)
-                shrinkAnimation.interpolator = OvershootInterpolator()
-
-                val animSet = AnimatorSet()
-                animSet.playSequentially(growAnimation, shrinkAnimation)
-                animSet.start()
-            }
-        }
-
-        Unit
-    }
+    override fun invalidate() = withState(viewModel) { state -> Timber.d("state: $state") }
 
 }
